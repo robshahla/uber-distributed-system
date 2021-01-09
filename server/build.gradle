@@ -1,3 +1,10 @@
+buildscript {
+    configurations {
+        classpath {
+            exclude group: 'ch.qos.logback', module: 'logback-classic'
+        }
+    }
+}
 plugins {
     id 'org.springframework.boot' version '2.3.2.RELEASE'
     id 'io.spring.dependency-management' version '1.0.8.RELEASE'
@@ -24,10 +31,19 @@ repositories {
 dependencies {
 
 
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation ('org.springframework.boot:spring-boot-starter-actuator') {
+    }
+    implementation ('org.springframework.boot:spring-boot-starter-web'){
 
+    }
+    implementation ('org.springframework.boot:spring-boot-starter-data-jpa'){
+
+    }
+    // https://mvnrepository.com/artifact/org.apache.zookeeper/zookeeper
+    compile('org.apache.zookeeper:zookeeper:3.6.2') {
+        exclude group: 'ch.qos.logback', module: 'logback-classic'
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    }
     // https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java
     implementation group: 'com.google.protobuf', name: 'protobuf-java', version: '3.13.0'
 // https://mvnrepository.com/artifact/io.grpc/grpc-stub
@@ -72,3 +88,5 @@ sourceSets {
 test {
     useJUnitPlatform()
 }
+
+

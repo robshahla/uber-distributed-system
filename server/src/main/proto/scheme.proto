@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "generated";
+//option java_outer_classname = "TaxiProto";
+
+package ssc;
+
+service  ssc{
+  rpc upsert(ride)  returns (response) {}
+}
+
+message response {
+  string msg = 1;
+}
+
+message ride {
+  string first_name = 1;
+  string last_name = 2;
+  string phone = 3;
+  string start_position = 4;
+  string end_position = 5;
+  string departure_time = 6; // (DD/MM/YYYY)
+  int32 vacancies = 7;
+  double pd = 8;
+}
+
+message reservation {
+  string start_position = 1;
+  string end_position = 2;
+  string departure_time = 3;
+}
+

@@ -1,0 +1,4 @@
+rootProject.name = 'ds-hw2'
+include 'client'
+include 'server'
+

@@ -21,6 +21,8 @@ public class sscService extends sscGrpc.sscImplBase {
     @Override
     public void upsert(ride request, StreamObserver<response> responseObserver) {
         System.out.println("Server port [" + port + "]");
+        responseObserver.onNext(response.newBuilder().setMsg("YEs").build());
+        responseObserver.onCompleted();
     }
 
     // Server streaming

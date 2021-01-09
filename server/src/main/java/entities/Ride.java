@@ -1,0 +1,61 @@
+package entities;
+
+import java.util.ArrayList;
+
+public class Ride {
+
+    private String first_name, last_name, phone, start_position, end_position, departure_time;
+    int vacancies;
+    double pd;
+    ArrayList<String> reservations;
+
+    public Ride(String first_name, String last_name, String phone, String start_position, String end_position, String departure_time, int vacancies, double pd) {
+        this.first_name = first_name;
+        this.last_name = last_name;
+        this.phone = phone;
+        this.start_position = start_position;
+        this.end_position = end_position;
+        this.departure_time = departure_time;
+        this.vacancies = vacancies;
+        this.pd = pd;
+    }
+
+    public String getFirstName() {
+        return first_name;
+    }
+
+    public String getLastName() {
+        return last_name;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public String getStartPosition() {
+        return start_position;
+    }
+
+    public String getEndPosition() {
+        return end_position;
+    }
+
+    public String getDepartureTime() {
+        return departure_time;
+    }
+
+    public int getVacancies() {
+        return vacancies;
+    }
+
+    public double getPd() {
+        return pd;
+    }
+
+    public void reserve(String name) {
+        if (reservations.size() < vacancies) {
+            reservations.add(name);
+        }
+    }
+
+}

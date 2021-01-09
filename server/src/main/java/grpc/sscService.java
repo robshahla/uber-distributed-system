@@ -1,3 +1,5 @@
+package grpc;
+
 import generated.*;
 import io.grpc.stub.StreamObserver;
 

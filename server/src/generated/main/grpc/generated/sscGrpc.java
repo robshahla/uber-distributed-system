@@ -58,6 +58,37 @@ public final class sscGrpc {
     return getUpsertMethod;
   }
 
+  private static volatile io.grpc.MethodDescriptor<generated.emptyMessage,
+      generated.response> getGetRidesMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "getRides",
+      requestType = generated.emptyMessage.class,
+      responseType = generated.response.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<generated.emptyMessage,
+      generated.response> getGetRidesMethod() {
+    io.grpc.MethodDescriptor<generated.emptyMessage, generated.response> getGetRidesMethod;
+    if ((getGetRidesMethod = sscGrpc.getGetRidesMethod) == null) {
+      synchronized (sscGrpc.class) {
+        if ((getGetRidesMethod = sscGrpc.getGetRidesMethod) == null) {
+          sscGrpc.getGetRidesMethod = getGetRidesMethod =
+              io.grpc.MethodDescriptor.<generated.emptyMessage, generated.response>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "getRides"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  generated.emptyMessage.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  generated.response.getDefaultInstance()))
+              .setSchemaDescriptor(new sscMethodDescriptorSupplier("getRides"))
+              .build();
+        }
+      }
+    }
+    return getGetRidesMethod;
+  }
+
   /**
    * Creates a new async stub that supports all call types for the service
    */
@@ -113,6 +144,13 @@ public final class sscGrpc {
       asyncUnimplementedUnaryCall(getUpsertMethod(), responseObserver);
     }
 
+    /**
+     */
+    public void getRides(generated.emptyMessage request,
+        io.grpc.stub.StreamObserver<generated.response> responseObserver) {
+      asyncUnimplementedUnaryCall(getGetRidesMethod(), responseObserver);
+    }
+
     @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
       return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
           .addMethod(
@@ -122,6 +160,13 @@ public final class sscGrpc {
                 generated.ride,
                 generated.response>(
                   this, METHODID_UPSERT)))
+          .addMethod(
+            getGetRidesMethod(),
+            asyncUnaryCall(
+              new MethodHandlers<
+                generated.emptyMessage,
+                generated.response>(
+                  this, METHODID_GET_RIDES)))
           .build();
     }
   }
@@ -147,6 +192,14 @@ public final class sscGrpc {
       asyncUnaryCall(
           getChannel().newCall(getUpsertMethod(), getCallOptions()), request, responseObserver);
     }
+
+    /**
+     */
+    public void getRides(generated.emptyMessage request,
+        io.grpc.stub.StreamObserver<generated.response> responseObserver) {
+      asyncUnaryCall(
+          getChannel().newCall(getGetRidesMethod(), getCallOptions()), request, responseObserver);
+    }
   }
 
   /**
@@ -168,6 +221,13 @@ public final class sscGrpc {
     public generated.response upsert(generated.ride request) {
       return blockingUnaryCall(
           getChannel(), getUpsertMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public generated.response getRides(generated.emptyMessage request) {
+      return blockingUnaryCall(
+          getChannel(), getGetRidesMethod(), getCallOptions(), request);
     }
   }
 
@@ -192,9 +252,18 @@ public final class sscGrpc {
       return futureUnaryCall(
           getChannel().newCall(getUpsertMethod(), getCallOptions()), request);
     }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<generated.response> getRides(
+        generated.emptyMessage request) {
+      return futureUnaryCall(
+          getChannel().newCall(getGetRidesMethod(), getCallOptions()), request);
+    }
   }
 
   private static final int METHODID_UPSERT = 0;
+  private static final int METHODID_GET_RIDES = 1;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -215,6 +284,10 @@ public final class sscGrpc {
       switch (methodId) {
         case METHODID_UPSERT:
           serviceImpl.upsert((generated.ride) request,
+              (io.grpc.stub.StreamObserver<generated.response>) responseObserver);
+          break;
+        case METHODID_GET_RIDES:
+          serviceImpl.getRides((generated.emptyMessage) request,
               (io.grpc.stub.StreamObserver<generated.response>) responseObserver);
           break;
         default:
@@ -279,6 +352,7 @@ public final class sscGrpc {
           serviceDescriptor = result = io.grpc.ServiceDescriptor.newBuilder(SERVICE_NAME)
               .setSchemaDescriptor(new sscFileDescriptorSupplier())
               .addMethod(getUpsertMethod())
+              .addMethod(getGetRidesMethod())
               .build();
         }
       }

@@ -1,6 +1,8 @@
 package management;
 
+import com.google.protobuf.DescriptorProtos;
 import entities.City;
+import entities.Reservation;
 import entities.Ride;
 import org.apache.zookeeper.ZooKeeper;
 
@@ -11,6 +13,10 @@ import java.util.Set;
 
 public class ServerManager {
 
+
+    public ArrayList<String> getLeaderShards() {
+        return leader_shards;
+    }
 
     /**
      * This server name.
@@ -62,10 +68,25 @@ public class ServerManager {
     public void init() {
     }
 
-    public Ride saveRide(Ride ride) {
-        return ride;
+    public String saveRide(Ride ride) {
+        return ride.toString();
     }
 
+    public String reserveRide(Reservation reservation) {
+        for (String city : reservation.getPath()) {
+            System.out.println(city);
+        }
+        return "";
+    }
+
+    public String getSnapshot() {
+
+        return "";
+    }
+
+    public ArrayList<Ride> getRides() {
+        return rides;
+    }
 
     private class Server {
         public String name;
@@ -76,5 +97,14 @@ public class ServerManager {
             this.grpc_address = grpc_address;
             this.rest_address = rest_address;
         }
+    }
+
+    public String getCityShard(String city_name) {
+        for (City city : cities) {
+            if (city.getName().equals(city_name)) {
+                return city.getShard();
+            }
+        }
+        return "";
     }
 }

@@ -20,29 +20,31 @@ public class Main implements Watcher {
     public ZooKeeper zk;
 
     public static void main(String[] args) {
+        String[] port = {"8081"};
+        RestMain.run(port);
 
-        Main runnn = new Main();
-        try {
-            ACL acl = new ACL();
-            ArrayList<ACL> acls = new ArrayList<>();
-            acls.add(acl);
-
-            System.out.println("Here");
-            System.out.println("path1=" + runnn.zk.create("/emil1", "3omar".getBytes(StandardCharsets.UTF_8),
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL));
-
-            List<String> child = runnn.zk.getChildren("/", runnn);
-            for (String i : child) {
-                System.out.println(i);
-            }
-            Thread.sleep(10000);
-            System.out.println("Exiting!!!");
-
-        } catch (KeeperException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+//        Main runnn = new Main();
+//        try {
+//            ACL acl = new ACL();
+//            ArrayList<ACL> acls = new ArrayList<>();
+//            acls.add(acl);
+//
+//            System.out.println("Here");
+//            System.out.println("path1=" + runnn.zk.create("/emil1", "3omar".getBytes(StandardCharsets.UTF_8),
+//                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL));
+//
+//            List<String> child = runnn.zk.getChildren("/", runnn);
+//            for (String i : child) {
+//                System.out.println(i);
+//            }
+//            Thread.sleep(10000);
+//            System.out.println("Exiting!!!");
+//
+//        } catch (KeeperException e) {
+//            e.printStackTrace();
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
     }
 
 

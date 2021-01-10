@@ -18,8 +18,7 @@ public class GrpcMain {
 //                System.out.println("Ending :D");
             } else {
                 String target = "localhost:1234";
-                ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
-                sscClient client = new sscClient(channel);
+                sscClient client = new sscClient(target);
                 client.upsert();
                 sscServer server = new sscServer(port);
                 server.start();

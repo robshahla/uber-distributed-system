@@ -2,6 +2,8 @@ package grpc;
 
 import generated.*;
 import io.grpc.Channel;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 
 import java.util.logging.Logger;
@@ -14,8 +16,8 @@ public class sscClient {
     private final sscGrpc.sscBlockingStub blockingStub;
     private final sscGrpc.sscStub asyncStub;
 
-    public sscClient(Channel channel) {
-
+    public sscClient(String address) {
+        ManagedChannel channel = ManagedChannelBuilder.forTarget(address).usePlaintext().build();
         blockingStub = sscGrpc.newBlockingStub(channel);
         asyncStub = sscGrpc.newStub(channel);
     }
@@ -36,5 +38,8 @@ public class sscClient {
         } catch (StatusRuntimeException e) {
             e.printStackTrace();
         }
+    }
+
+    public void getRides() {
     }
 }

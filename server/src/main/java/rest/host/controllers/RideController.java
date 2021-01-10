@@ -1,14 +1,16 @@
 package rest.host.controllers;
+
+import entities.Ride;
+import management.ServerManager;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 public class RideController {
 
-    @GetMapping("/employees")
-    void all() {
-        System.out.println("hello-rest");
+    @PostMapping("/rides")
+    Ride publishRide(@RequestBody Ride ride) {
+        return ServerManager.getInstance().saveRide(ride);
     }
 
 }

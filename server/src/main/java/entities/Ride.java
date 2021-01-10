@@ -4,7 +4,8 @@ import java.util.ArrayList;
 
 public class Ride {
 
-    private String first_name, last_name, phone, start_position, end_position, departure_time;
+    private int id;
+    private final String first_name, last_name, phone, start_position, end_position, departure_time;
     int vacancies;
     double pd;
     ArrayList<String> reservations;
@@ -18,6 +19,10 @@ public class Ride {
         this.departure_time = departure_time;
         this.vacancies = vacancies;
         this.pd = pd;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getFirstName() {
@@ -58,4 +63,19 @@ public class Ride {
         }
     }
 
+    @Override
+    public String toString() {
+        return "Ride{" +
+                "id=" + id +
+                ", first_name='" + first_name + '\'' +
+                ", last_name='" + last_name + '\'' +
+                ", phone='" + phone + '\'' +
+                ", start_position='" + start_position + '\'' +
+                ", end_position='" + end_position + '\'' +
+                ", departure_time='" + departure_time + '\'' +
+                ", vacancies=" + vacancies +
+                ", pd=" + pd +
+                ", reservations=" + reservations +
+                '}';
+    }
 }

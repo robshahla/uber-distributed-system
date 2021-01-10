@@ -1,6 +1,8 @@
 import grpc.*;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.ACL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rest.host.RestMain;
 
 import java.io.IOException;
@@ -9,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
+import java.util.logging.LogManager;
+
 
 public class Main implements Watcher {
 
@@ -16,6 +20,7 @@ public class Main implements Watcher {
     public ZooKeeper zk;
 
     public static void main(String[] args) {
+
         Main runnn = new Main();
         try {
             ACL acl = new ACL();
@@ -23,11 +28,16 @@ public class Main implements Watcher {
             acls.add(acl);
 
             System.out.println("Here");
-            System.out.println("path=" + runnn.zk.create("/emisdfdsfsl", "emil".getBytes(StandardCharsets.UTF_8), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+            System.out.println("path1=" + runnn.zk.create("/emil1", "3omar".getBytes(StandardCharsets.UTF_8),
+                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL));
+
             List<String> child = runnn.zk.getChildren("/", runnn);
             for (String i : child) {
                 System.out.println(i);
             }
+            Thread.sleep(10000);
+            System.out.println("Exiting!!!");
+
         } catch (KeeperException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -43,8 +53,6 @@ public class Main implements Watcher {
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
-
-
     }
 
     @Override
@@ -55,6 +63,10 @@ public class Main implements Watcher {
         } else {
             System.out.print("ZooKeeper COULD NOT CONNECT!");
         }
-
     }
 }
+
+
+//  /elections/shard1 /elections/shard2 /elections/shard3 .. /elections/shardn
+
+// /active/server-1 /active/server-2 /active/server-3 .. /active/server-k   EPH

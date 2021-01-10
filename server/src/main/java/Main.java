@@ -38,7 +38,7 @@ public class Main implements Watcher {
 
     public Main() {
         try {
-            zk = new ZooKeeper("localhost:2181", 3000, this);
+            zk = new ZooKeeper("localhost:2181", 3000, this); // to run in docker container get ip of the container running zookeeper, for example 172.17.0.2, and instead of localhost:2128 write 172.17.0.2:2181.
             connectedSignal.await();
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();

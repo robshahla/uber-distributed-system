@@ -29,5 +29,13 @@ public class City {
         return y;
     }
 
-
+    @Override
+    public String toString() {
+        return "City{" +
+                "name='" + name + '\'' +
+                ", x=" + x +
+                ", y=" + y +
+                ", shard='" + shard + '\'' +
+                '}';
+    }
 }

@@ -1,13 +1,16 @@
 package grpc;
 
+import entities.Ride;
 import generated.*;
 import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
+import io.grpc.stub.StreamObserver;
 
+import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.logging.Logger;
-
 
 
 public class sscClient {
@@ -40,6 +43,59 @@ public class sscClient {
         }
     }
 
-    public void getRides() {
+    public String addRideLeader(Ride msg, boolean async) {
+        ride request =
+                ride.newBuilder()
+                        .setFirstName(msg.getFirstName())
+                        .setLastName(msg.getLastName())
+                        .setPhone(msg.getPhone())
+                        .setStartPosition(msg.getStartPosition())
+                        .setEndPosition(msg.getEndPosition())
+                        .setDepartureTime(msg.getDepartureTime())
+                        .setVacancies(msg.getVacancies())
+                        .setPd(msg.getPd())
+                        .build();
+        if (async) {
+            asyncStub.addRideLeader(request, new StreamObserver<response>() {
+                @Override
+                public void onNext(response value) {
+
+                }
+
+                @Override
+                public void onError(Throwable t) {
+
+                }
+
+                @Override
+                public void onCompleted() {
+
+                }
+            });
+            return "";
+        } else {
+            return blockingStub.addRideLeader(request).getMsg();
+        }
+    }
+
+    public void getRides(ArrayList<String> append_list, CountDownLatch latch) {
+        asyncStub.getRides(emptyMessage.newBuilder().build(), new StreamObserver<response>() {
+            @Override
+            public void onNext(response value) {
+                synchronized (append_list) {
+                    append_list.add(value.getMsg());
+                }
+            }
+
+            @Override
+            public void onError(Throwable t) {
+
+            }
+
+            @Override
+            public void onCompleted() {
+                latch.countDown();
+            }
+        });
     }
 }

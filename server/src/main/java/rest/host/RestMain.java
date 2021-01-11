@@ -8,9 +8,9 @@ import java.util.Collections;
 
 @SpringBootApplication(exclude={DataSourceAutoConfiguration.class})
 public class RestMain {
-    public static void run(String[] args) {
+    public static void run(String port) {
         SpringApplication app = new SpringApplication(RestMain.class);
-        app.setDefaultProperties(Collections.singletonMap("server.port", args[0]));
-        app.run(args);
+        app.setDefaultProperties(Collections.singletonMap("server.port", port));
+        app.run();
     }
 }

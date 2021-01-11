@@ -48,4 +48,16 @@ public class sscService extends sscGrpc.sscImplBase {
         responseObserver.onNext(response.newBuilder().setMsg(result).build());
         responseObserver.onCompleted();
     }
+
+    /**
+     * A follower will execute this if he received command from leader to save a given ride.
+     */
+    @Override
+    public void addRideFollower(ride request, StreamObserver<response> responseObserver) {
+        ServerManager sm = ServerManager.getInstance();
+        Ride ride = new Ride(request);
+        sm.addRide(ride);
+        responseObserver.onNext(response.newBuilder().build());
+        responseObserver.onCompleted();
+    }
 }

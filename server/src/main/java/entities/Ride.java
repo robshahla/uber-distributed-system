@@ -88,7 +88,7 @@ public class Ride {
                 ", departure_time='" + departure_time + '\'' +
                 ", vacancies=" + vacancies +
                 ", pd=" + pd +
-                ", reservations=" + reservations +
+                ", reservations=" + String.join(",", reservations) +
                 '}';
     }
 }

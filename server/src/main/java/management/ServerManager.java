@@ -139,32 +139,79 @@ public class ServerManager {
                 .filter(server -> server.shards.contains(start_city.getShard()))
                 .forEach(server -> {
                     sscClient grpc_client = new sscClient(server.getGrpcAddress());
-                    grpc_client.addRideLeader(ride, true);
+                    grpc_client.addRideFollower(ride);
                 });
         return "";
     }
 
-    public String saveRide(Ride ride) {
-        City start_city = cities.stream().filter(city -> {
-            return city.getName().equals(ride.getStartPosition());
+    /**
+     * given a city name, return the current leader server for this city.
+     */
+    public Server getLeader(String start_city) {
+        City needed_city = cities.stream().filter(city -> {
+            return city.getName().equals(start_city);
         }).findAny().orElse(null);
-        assert start_city != null;
-        Server leader_server = shard_leaders.get(start_city.getName());
 
+        assert needed_city != null;
+        return shard_leaders.get(needed_city.getShard());
+    }
+
+    public String saveRide(Ride ride) {
+        Server leader_server = getLeader(ride.getStartPosition());
         if (current_server.getName().equals(leader_server.getName())) {
-            rides.add(ride);
+            addRide(ride);
             broadcastRide(ride);
             return ride.toString();
         }
         sscClient grpc_client = new sscClient(leader_server.getGrpcAddress());
-        grpc_client.addRideLeader(ride, false);
+        grpc_client.addRideLeader(ride); // @TODO: add retry for a couple of times in case the leader failed while broadcasting - we want to send this to the new leader
         return ride.toString();
     }
 
-    public String reserveRide(Reservation reservation) {
-        for (String city : reservation.getPath()) {
-            System.out.println(city);
+    /**
+     * add a given ride to the rides array only if there doesn't exist another ride with the same parameters.
+     * Important: We want this to be idempotent, in case there was a leader change and some followers executed it while
+     * others didn't (this happens if the leader fails while broadcasting). To prevent this we retry with several leaders, and thus,
+     * a new leader will broadcast again, and a follower might receive a command to add the same ride several times.
+     */
+    public void addRide(Ride ride) {
+        boolean ride_exists = rides.stream().anyMatch(element ->
+                element.getFirstName().equals(ride.getFirstName()) &&
+                        element.getLastName().equals(ride.getLastName()) &&
+                        element.getStartPosition().equals(ride.getStartPosition()) &&
+                        element.getDepartureTime().equals(ride.getDepartureTime()));
+        if (!ride_exists) {
+            rides.add(ride);
         }
+    }
+
+    public String reserveRide(Reservation reservation) {
+        assert reservation.getPath().length >= 2; // we assume that a client won't request a reservation with a path of length less than 2
+        if(reservation.getPath().length == 2) {
+            return reserveOneRide(reservation);
+        }
+
+        // return reservePath(reservation); // TODO: should think how to implement this
+        return ""; // TODO: remove
+    }
+
+    public String reserveOneRide(Reservation reservation) {
+        Server leader_server = getLeader(reservation.getPath()[0]);
+        if (current_server.getName().equals(leader_server.getName())) {
+            String ride_status = addReservation(reservation);
+            if(ride_status.equals("No ride was found")) {
+               return ride_status;
+            }
+            //broadcastReservation()
+            return ride_status;
+        }
+        sscClient grpc_client = new sscClient(leader_server.getGrpcAddress());
+//        return grpc_client.reserveRideLeader(reservation); // @TODO: add retry for a couple of times in case the leader failed while broadcasting - we want to send this to the new leader, this should be idempotent
+        return ""; // TODO: remove
+    }
+
+    public String addReservation(Reservation reservation) {
+        // TODO: check if there is a suitable ride, if so reserve it and return ride.toString(), otherwise return "No ride was found"
         return "";
     }
 
@@ -191,9 +238,6 @@ public class ServerManager {
         return rides;
     }
 
-    public void addRide(Ride ride) {
-
-    }
 
     private class Server {
         private final String name;

@@ -50,12 +50,14 @@ public final class Scheme {
       "ion\030\005 \001(\t\022\026\n\016departure_time\030\006 \001(\t\022\021\n\tvac" +
       "ancies\030\007 \001(\005\022\n\n\002pd\030\010 \001(\001\"S\n\013reservation\022" +
       "\026\n\016start_position\030\001 \001(\t\022\024\n\014end_position\030" +
-      "\002 \001(\t\022\026\n\016departure_time\030\003 \001(\t2\267\001\n\003ssc\022$\n" +
+      "\002 \001(\t\022\026\n\016departure_time\030\003 \001(\t2\357\001\n\003ssc\022$\n" +
       "\006upsert\022\t.ssc.ride\032\r.ssc.response\"\000\022.\n\010g" +
       "etRides\022\021.ssc.emptyMessage\032\r.ssc.respons" +
       "e\"\000\022+\n\raddRideLeader\022\t.ssc.ride\032\r.ssc.re" +
       "sponse\"\000\022-\n\017addRideFollower\022\t.ssc.ride\032\r" +
-      ".ssc.response\"\000B\r\n\tgeneratedP\001b\006proto3"
+      ".ssc.response\"\000\0226\n\021reserveRideLeader\022\020.s" +
+      "sc.reservation\032\r.ssc.response\"\000B\r\n\tgener" +
+      "atedP\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,

@@ -10,6 +10,7 @@ import io.grpc.stub.StreamObserver;
 
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 
@@ -43,39 +44,44 @@ public class sscClient {
         }
     }
 
-    public String addRideLeader(Ride msg, boolean async) {
-        ride request =
-                ride.newBuilder()
-                        .setFirstName(msg.getFirstName())
-                        .setLastName(msg.getLastName())
-                        .setPhone(msg.getPhone())
-                        .setStartPosition(msg.getStartPosition())
-                        .setEndPosition(msg.getEndPosition())
-                        .setDepartureTime(msg.getDepartureTime())
-                        .setVacancies(msg.getVacancies())
-                        .setPd(msg.getPd())
-                        .build();
-        if (async) {
-            asyncStub.addRideLeader(request, new StreamObserver<response>() {
-                @Override
-                public void onNext(response value) {
+    public String addRideLeader(Ride msg) {
+        ride request = getRideRequest(msg);
+        return blockingStub.withDeadlineAfter(3, TimeUnit.SECONDS).addRideLeader(request).getMsg(); // @TODO: decide how to use deadline for the retries with different leaders... exponential backoff until a threshold of 1 second for example.
+    }
 
-                }
+    public void addRideFollower(Ride msg) {
+        ride request = getRideRequest(msg);
 
-                @Override
-                public void onError(Throwable t) {
+        asyncStub.addRideFollower(request, new StreamObserver<response>() {
+            @Override
+            public void onNext(response value) {
 
-                }
+            }
 
-                @Override
-                public void onCompleted() {
+            @Override
+            public void onError(Throwable t) {
+                System.out.println(t.toString());
+            }
 
-                }
-            });
-            return "";
-        } else {
-            return blockingStub.addRideLeader(request).getMsg();
-        }
+            @Override
+            public void onCompleted() {
+
+            }
+        });
+
+    }
+
+    private ride getRideRequest(Ride msg) {
+        return ride.newBuilder()
+                .setFirstName(msg.getFirstName())
+                .setLastName(msg.getLastName())
+                .setPhone(msg.getPhone())
+                .setStartPosition(msg.getStartPosition())
+                .setEndPosition(msg.getEndPosition())
+                .setDepartureTime(msg.getDepartureTime())
+                .setVacancies(msg.getVacancies())
+                .setPd(msg.getPd())
+                .build();
     }
 
     public void getRides(ArrayList<String> append_list, CountDownLatch latch) {

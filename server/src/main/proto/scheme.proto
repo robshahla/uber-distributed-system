@@ -11,6 +11,7 @@ service  ssc{
   rpc getRides(emptyMessage) returns (response) {}
   rpc addRideLeader(ride) returns (response) {}
   rpc addRideFollower(ride) returns (response) {}
+  rpc reserveRideLeader(reservation) returns (response) {}
 }
 
 message emptyMessage {}

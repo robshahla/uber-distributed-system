@@ -151,6 +151,37 @@ public final class sscGrpc {
     return getAddRideFollowerMethod;
   }
 
+  private static volatile io.grpc.MethodDescriptor<generated.reservation,
+      generated.response> getReserveRideLeaderMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "reserveRideLeader",
+      requestType = generated.reservation.class,
+      responseType = generated.response.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<generated.reservation,
+      generated.response> getReserveRideLeaderMethod() {
+    io.grpc.MethodDescriptor<generated.reservation, generated.response> getReserveRideLeaderMethod;
+    if ((getReserveRideLeaderMethod = sscGrpc.getReserveRideLeaderMethod) == null) {
+      synchronized (sscGrpc.class) {
+        if ((getReserveRideLeaderMethod = sscGrpc.getReserveRideLeaderMethod) == null) {
+          sscGrpc.getReserveRideLeaderMethod = getReserveRideLeaderMethod =
+              io.grpc.MethodDescriptor.<generated.reservation, generated.response>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "reserveRideLeader"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  generated.reservation.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  generated.response.getDefaultInstance()))
+              .setSchemaDescriptor(new sscMethodDescriptorSupplier("reserveRideLeader"))
+              .build();
+        }
+      }
+    }
+    return getReserveRideLeaderMethod;
+  }
+
   /**
    * Creates a new async stub that supports all call types for the service
    */
@@ -227,6 +258,13 @@ public final class sscGrpc {
       asyncUnimplementedUnaryCall(getAddRideFollowerMethod(), responseObserver);
     }
 
+    /**
+     */
+    public void reserveRideLeader(generated.reservation request,
+        io.grpc.stub.StreamObserver<generated.response> responseObserver) {
+      asyncUnimplementedUnaryCall(getReserveRideLeaderMethod(), responseObserver);
+    }
+
     @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
       return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
           .addMethod(
@@ -257,6 +295,13 @@ public final class sscGrpc {
                 generated.ride,
                 generated.response>(
                   this, METHODID_ADD_RIDE_FOLLOWER)))
+          .addMethod(
+            getReserveRideLeaderMethod(),
+            asyncUnaryCall(
+              new MethodHandlers<
+                generated.reservation,
+                generated.response>(
+                  this, METHODID_RESERVE_RIDE_LEADER)))
           .build();
     }
   }
@@ -306,6 +351,14 @@ public final class sscGrpc {
       asyncUnaryCall(
           getChannel().newCall(getAddRideFollowerMethod(), getCallOptions()), request, responseObserver);
     }
+
+    /**
+     */
+    public void reserveRideLeader(generated.reservation request,
+        io.grpc.stub.StreamObserver<generated.response> responseObserver) {
+      asyncUnaryCall(
+          getChannel().newCall(getReserveRideLeaderMethod(), getCallOptions()), request, responseObserver);
+    }
   }
 
   /**
@@ -348,6 +401,13 @@ public final class sscGrpc {
     public generated.response addRideFollower(generated.ride request) {
       return blockingUnaryCall(
           getChannel(), getAddRideFollowerMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public generated.response reserveRideLeader(generated.reservation request) {
+      return blockingUnaryCall(
+          getChannel(), getReserveRideLeaderMethod(), getCallOptions(), request);
     }
   }
 
@@ -396,12 +456,21 @@ public final class sscGrpc {
       return futureUnaryCall(
           getChannel().newCall(getAddRideFollowerMethod(), getCallOptions()), request);
     }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<generated.response> reserveRideLeader(
+        generated.reservation request) {
+      return futureUnaryCall(
+          getChannel().newCall(getReserveRideLeaderMethod(), getCallOptions()), request);
+    }
   }
 
   private static final int METHODID_UPSERT = 0;
   private static final int METHODID_GET_RIDES = 1;
   private static final int METHODID_ADD_RIDE_LEADER = 2;
   private static final int METHODID_ADD_RIDE_FOLLOWER = 3;
+  private static final int METHODID_RESERVE_RIDE_LEADER = 4;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -434,6 +503,10 @@ public final class sscGrpc {
           break;
         case METHODID_ADD_RIDE_FOLLOWER:
           serviceImpl.addRideFollower((generated.ride) request,
+              (io.grpc.stub.StreamObserver<generated.response>) responseObserver);
+          break;
+        case METHODID_RESERVE_RIDE_LEADER:
+          serviceImpl.reserveRideLeader((generated.reservation) request,
               (io.grpc.stub.StreamObserver<generated.response>) responseObserver);
           break;
         default:
@@ -501,6 +574,7 @@ public final class sscGrpc {
               .addMethod(getGetRidesMethod())
               .addMethod(getAddRideLeaderMethod())
               .addMethod(getAddRideFollowerMethod())
+              .addMethod(getReserveRideLeaderMethod())
               .build();
         }
       }

@@ -4,6 +4,7 @@ import org.apache.tomcat.util.json.JSONParser;
 import org.apache.zookeeper.*;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,7 +16,7 @@ public class Main implements Watcher {
     public ZooKeeper zk;
     private static final Logger logger = Logger.getLogger(Main.class.getName());
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         ServerManager sm = ServerManager.getInstance();
         String filePath = "/Users/Emil/IdeaProjects/ds-hw2/server/src/main/java/config.json";
         String server_name = "server-1";

@@ -5,9 +5,11 @@ import entities.Reservation;
 import entities.Ride;
 import grpc.GrpcMain;
 import grpc.sscClient;
+
 import org.json.simple.*;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.slf4j.LoggerFactory;
 import rest.host.RestMain;
 
 import java.io.FileReader;
@@ -40,7 +42,10 @@ public class ServerManager {
      */
     private Map<String, Server> shard_leaders;
 
-    private ArrayList<Server> alive_servers;
+    /**
+     * Contains all servers in the system (dead and alive!)
+     */
+    private Map<String, Server> system_servers;
 
 
     /**
@@ -57,11 +62,13 @@ public class ServerManager {
 
     public ZKManager zk;
 
+
     private ServerManager() {
         cities = new HashSet<>();
         rides = new ArrayList<>();
+        shard_leaders = new HashMap<>();
         leader_shards = new ArrayList<>();
-        alive_servers = new ArrayList<>();
+        system_servers = new HashMap<>();
     }
 
     public static ServerManager getInstance() {
@@ -70,10 +77,6 @@ public class ServerManager {
             instance.logger = Logger.getLogger(ServerManager.class.getName());
         }
         return instance;
-    }
-
-    public ZKManager getZKManager() {
-        return zk;
     }
 
     @SuppressWarnings("unchecked")
@@ -89,14 +92,13 @@ public class ServerManager {
         // initializing cities array
         JSONArray city_array = (JSONArray) json_data.get("cities");
         city_array.forEach(obj -> {
-            JSONArray city_info = (JSONArray) obj;
-            String city_name = ((JSONArray) obj).get(0).toString();
-            double x = Double.parseDouble(((JSONArray) obj).get(1).toString());
-            double y = Double.parseDouble(((JSONArray) obj).get(2).toString());
-            String shard = ((JSONArray) obj).get(3).toString();
+            JSONObject city_info = (JSONObject) obj;
+            String city_name = city_info.get("city-name").toString();
+            double x = Double.parseDouble(city_info.get("X").toString());
+            double y = Double.parseDouble(city_info.get("Y").toString());
+            String shard = city_info.get("shard").toString();
             City city = new City(city_name, x, y, shard);
             cities.add(city);
-            System.out.println(city);
         });
 
         // initializing servers array
@@ -107,23 +109,25 @@ public class ServerManager {
             String grpc_address = server_object.get("grpc-address").toString();
             String rest_address = server_object.get("rest-address").toString();
             JSONArray server_shards = (JSONArray) server_object.get("shards");
+            System.out.println(server_shards);
             Server server = new Server(serverName, grpc_address, rest_address);
             ArrayList<String> shards = new ArrayList<>();
             shards.addAll(server_shards);
             server.setShards(shards);
-            alive_servers.add(server);
+            system_servers.put(serverName, server);
 
             if (serverName.equals(server_name)) {
                 this.current_server = server;
             }
 
-            System.out.println(server);
         });
-        System.out.println(current_server.getGrpcPort());
         return true;
     }
 
     public boolean start() {
+        ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+        rootLogger.setLevel(ch.qos.logback.classic.Level.ERROR);
+
         zk.connect();
         GrpcMain.run(current_server.getGrpcPort());
         RestMain.run(current_server.getRestAddress());
@@ -135,7 +139,7 @@ public class ServerManager {
             return city.getName().equals(ride.getStartPosition());
         }).findAny().orElse(null);
         assert start_city != null;
-        alive_servers.stream()
+        system_servers.values().stream()
                 .filter(server -> server.shards.contains(start_city.getShard()))
                 .forEach(server -> {
                     sscClient grpc_client = new sscClient(server.getGrpcAddress());
@@ -187,7 +191,7 @@ public class ServerManager {
 
     public String reserveRide(Reservation reservation) {
         assert reservation.getPath().length >= 2; // we assume that a client won't request a reservation with a path of length less than 2
-        if(reservation.getPath().length == 2) {
+        if (reservation.getPath().length == 2) {
             return reserveOneRide(reservation);
         }
 
@@ -199,8 +203,8 @@ public class ServerManager {
         Server leader_server = getLeader(reservation.getPath()[0]);
         if (current_server.getName().equals(leader_server.getName())) {
             String ride_status = addReservation(reservation);
-            if(ride_status.equals("No ride was found")) {
-               return ride_status;
+            if (ride_status.equals("No ride was found")) {
+                return ride_status;
             }
             //broadcastReservation()
             return ride_status;
@@ -239,19 +243,27 @@ public class ServerManager {
     }
 
 
-    private class Server {
+    public static class Server {
         private final String name;
         private String grpc_address, rest_address;
         private ArrayList<String> shards;
+        private long heartbeat_time = 0;
+        private static long current_time = 0;
+
 
         public Server(String name) {
-            this.name = name;
+            this(name,"","");
         }
 
         public Server(String name, String grpc_address, String rest_address) {
             this.name = name;
             this.grpc_address = grpc_address;
             this.rest_address = rest_address;
+            heartbeat();
+        }
+
+        public ArrayList<String> getShards() {
+            return shards;
         }
 
         public void setShards(ArrayList<String> shards) {
@@ -287,13 +299,18 @@ public class ServerManager {
             return rest_address.split(":")[1];
         }
 
-        public void setGrpcAddress(String grpc_address) {
-            this.grpc_address = grpc_address;
+        public boolean isAlive() {
+            return heartbeat_time == current_time;
         }
 
-        public void setRestAddress(String rest_address) {
-            this.rest_address = rest_address;
+        public void heartbeat() {
+            heartbeat_time = current_time;
         }
+
+        public static void killAll() {
+            current_time++;
+        }
+
     }
 
     public String getCityShard(String city_name) {
@@ -303,6 +320,29 @@ public class ServerManager {
                 .orElse(null);
         assert city != null;
         return city.getShard();
+    }
+
+    public Server getServer() {
+        return current_server;
+    }
+
+    public Collection<Server> getAliveServers() {
+        return system_servers.values();
+    }
+
+    public Map<String, Server> getShard_leaders() {
+        return shard_leaders;
+    }
+
+
+    public void updateShardLeader(String shard, Server server) {
+        logger.log(Level.INFO, "new shard leader" + shard + " server=" + server.getName());
+        shard_leaders.put(shard, server);
+    }
+
+    public void updateAliveServers(List<String> alive) {
+        Server.killAll();
+        alive.forEach(server_name -> system_servers.get(server_name).heartbeat());
     }
 
     private Map<String, Object> getJsonMap(String file_path) {

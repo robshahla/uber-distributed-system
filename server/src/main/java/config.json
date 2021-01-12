@@ -1,12 +1,18 @@
 {
   "zk-address": "localhost:2181",
   "cities": [
-    [
-      "A",
-      "1.2",
-      "2",
-      "SH1"
-    ]
+    {
+      "city-name": "A",
+      "X": "1",
+      "Y": "2",
+      "shard": "shard-2"
+    },
+    {
+      "city-name": "B",
+      "X": "3",
+      "Y": "2",
+      "shard": "shard-1"
+    }
   ],
   "servers": [
     {
@@ -14,8 +20,8 @@
       "rest-address": "localhost:8000",
       "grpc-address": "localhost:7862",
       "shards": [
-        "SH1",
-        "SH2"
+        "shard-1",
+        "shard-2"
       ]
     }
   ]

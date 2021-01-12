@@ -32,7 +32,7 @@ public class sscServer {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        logger.info("Server started, listening on " + port);
+        logger.info("grpc-Server started, listening on " + port);
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {

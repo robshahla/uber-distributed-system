@@ -35,5 +35,6 @@ message reservation {
   string start_position = 1;
   string end_position = 2;
   string departure_time = 3;
+  string path = 4;
 }
 

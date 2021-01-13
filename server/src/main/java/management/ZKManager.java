@@ -93,12 +93,27 @@ public class ZKManager {
 
     public boolean updateCityNeighbor(City city, Ride ride, int offset) {
         String city_path = Paths.get(ZKPaths.CITIES, city.getName(), ride.getStartPosition().getName()).toString();
-        Stat child_state = new Stat();
-        byte[] child_data;
-        JsonObject json_data = new JsonObject();
+
+        boolean modification_succeeded = modifyCityNeighbor(city_path, ride, offset);
+
+        if (!modification_succeeded) {
+            createCityNeighbor(city_path, ride, offset);
+        }
+        return false;
+    }
+
+    /**
+     * given a path to a Znode, check if this node exists, if so modify its data, and remove it if it is redundant,
+     * i.e. it represents no rides.
+     * returns false in case no Znode was present in city_path, otherwise retruns True
+     */
+    private boolean modifyCityNeighbor(String city_path, Ride ride, int offset) {
         var ref = new Object() {
             int new_val = -1;
         };
+        Stat child_state = new Stat();
+        byte[] child_data;
+        JsonObject json_data = new JsonObject();
         try {
             child_data = zooKeeper.getData(city_path, false, null);
             json_data = JsonParser.parseString(new String(child_data, StandardCharsets.UTF_8)).getAsJsonObject();
@@ -106,26 +121,47 @@ public class ZKManager {
             ref.new_val = offset;
             optionalJsonElement.ifPresent(jsonElement -> ref.new_val += jsonElement.getAsInt());
             assert ref.new_val >= 0;
-            json_data.add(ride.getEndPosition().getName(), new JsonPrimitive(ref.new_val));
-        } catch (KeeperException e) {
-            if (e.code() == KeeperException.Code.NONODE) {
-                assert offset > 0;
-                ref.new_val = offset;
-                json_data.add(ride.getEndPosition().getName(), new JsonPrimitive(offset));
-                try {
-                    zooKeeper.create(city_path, json_data.toString().getBytes(StandardCharsets.UTF_8), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-                } catch (KeeperException | InterruptedException keeperException) {
-                    keeperException.printStackTrace();
-                    return false;
-                }
+
+            // check if there's no more rides that end in ride.endPosition, if so remove this entry from the data
+            if (ref.new_val == 0) {
+                json_data.remove(ride.getEndPosition().getName());
             } else {
+                json_data.add(ride.getEndPosition().getName(), new JsonPrimitive(ref.new_val));
+            }
+
+            //check if this Znode should be removed since it suggests no rides.
+            if (json_data.size() == 0) {
+                zooKeeper.delete(city_path, -1);
+            } else { // we add the modification
+                zooKeeper.setData(city_path, json_data.toString().getBytes(StandardCharsets.UTF_8), -1);
+            }
+            return true;
+        } catch (KeeperException e) {
+            if (e.code() != KeeperException.Code.NONODE) {
                 e.printStackTrace();
+                System.out.println("Should not get here");
                 return false;
             }
-        } catch (InterruptedException ignored) {
-
+            return false;  // Should get here if no Znode was found in the given path
+        } catch (InterruptedException e) {
+            System.out.println("Should not get here");
+            return false;
         }
-        return false;
+    }
+
+    /**
+     * given a path, we create a Znode and insert a relevant ride in it, this is called we we know that no such Znode
+     * is present in ZK.
+     */
+    private void createCityNeighbor(String city_path, Ride ride, int offset) {
+        JsonObject json_data = new JsonObject();
+        assert offset > 0;
+        json_data.add(ride.getEndPosition().getName(), new JsonPrimitive(offset));
+        try {
+            zooKeeper.create(city_path, json_data.toString().getBytes(StandardCharsets.UTF_8), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        } catch (KeeperException | InterruptedException keeperException) {
+            keeperException.printStackTrace();
+        }
     }
 
     private static class ZKPaths {

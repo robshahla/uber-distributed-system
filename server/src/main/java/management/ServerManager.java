@@ -166,8 +166,9 @@ public class ServerManager {
     public String saveRide(Ride ride) {
         Server leader_server = getLeader(ride.getStartPosition().getName());
         if (current_server.getName().equals(leader_server.getName())) {
+            assert ride.getVacancies() > 0;
             updateZk(ride, ride.getVacancies());
-            addRide(ride);
+            addRide(ride); // might need to invoke before `updateZk`
             broadcastRide(ride);
             return ride.toString();
         }
@@ -204,6 +205,9 @@ public class ServerManager {
         }
     }
 
+    /**
+     * we get here from the REST call
+     */
     public String reserveRide(Reservation reservation) {
         assert reservation.getPath().length >= 2; // we assume that a client won't request a reservation with a path of length less than 2
         if (reservation.getPath().length == 2) {
@@ -217,21 +221,23 @@ public class ServerManager {
     public String reserveOneRide(Reservation reservation) {
         Server leader_server = getLeader(reservation.getPath()[0]);
         if (current_server.getName().equals(leader_server.getName())) {
-            String ride_status = addReservation(reservation);
-            if (ride_status.equals("No ride was found")) {
-                return ride_status;
+
+            Ride ride = addReservation(reservation);
+            if (ride.equals("No ride was found")) {
+                return "ride";
             }
             //broadcastReservation()
-            return ride_status;
+            return "ride";
         }
         sscClient grpc_client = new sscClient(leader_server.getGrpcAddress());
 //        return grpc_client.reserveRideLeader(reservation); // @TODO: add retry for a couple of times in case the leader failed while broadcasting - we want to send this to the new leader, this should be idempotent
         return ""; // TODO: remove
     }
 
-    public String addReservation(Reservation reservation) {
-        // TODO: check if there is a suitable ride, if so reserve it and return ride.toString(), otherwise return "No ride was found"
-        return "";
+    public Ride addReservation(Reservation reservation) {
+
+        // TODO: check if there is a suitable ride, if so reserve it and return ride, otherwise return "No ride was found"
+        return null;
     }
 
     public String getSnapshot() {

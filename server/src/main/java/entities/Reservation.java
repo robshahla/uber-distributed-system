@@ -2,18 +2,18 @@ package entities;
 
 public class Reservation {
 
-    private final String first_name, last_name, date;
-    private final String[] path; // TODO: This should be a comma seperated string, in order to pass it in protobuf, once we change it we must change also the reservation in protobuf
+    private final String first_name, last_name, departure_time;
+    private final String path;
 
-    public Reservation(String first_name, String last_name, String date, String[] path) {
+    public Reservation(String first_name, String last_name, String departure_time, String path) {
         this.first_name = first_name;
         this.last_name = last_name;
         this.path = path;
-        this.date = date;
+        this.departure_time = departure_time;
     }
 
     public String[] getPath() {
-        return path;
+        return path.split(",");
     }
 
     public String getFirstName() {
@@ -25,6 +25,6 @@ public class Reservation {
     }
 
     public String getDate() {
-        return date;
+        return departure_time;
     }
 }

@@ -79,6 +79,9 @@ public class Ride {
         }
     }
 
+    /**
+     * check if the person suggesting the ride will accept going to the given city to pick someone up
+     */
     public boolean isCityNeighbor(City city) {
         double distance = distanceToLine(city);
         if (distance > pd) return false;

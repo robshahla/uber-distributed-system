@@ -1,8 +1,11 @@
 package entities;
 
 import generated.ride;
+import management.ServerManager;
 
 import java.util.ArrayList;
+
+import static java.lang.Math.*;
 
 public class Ride {
 
@@ -24,14 +27,14 @@ public class Ride {
     }
 
     public Ride(ride request) {
-         this.first_name = request.getFirstName();
-         this.last_name = request.getLastName();
-         this.phone = request.getPhone();
-         this.start_position = request.getStartPosition();
-         this.end_position = request.getEndPosition();
-         this.departure_time = request.getDepartureTime();
-         this.vacancies = request.getVacancies();
-         this.pd = request.getPd();
+        this.first_name = request.getFirstName();
+        this.last_name = request.getLastName();
+        this.phone = request.getPhone();
+        this.start_position = request.getStartPosition();
+        this.end_position = request.getEndPosition();
+        this.departure_time = request.getDepartureTime();
+        this.vacancies = request.getVacancies();
+        this.pd = request.getPd();
     }
 
     public void setId(int id) {
@@ -50,12 +53,12 @@ public class Ride {
         return phone;
     }
 
-    public String getStartPosition() {
-        return start_position;
+    public City getStartPosition() {
+        return ServerManager.getInstance().getCity(start_position);
     }
 
-    public String getEndPosition() {
-        return end_position;
+    public City getEndPosition() {
+        return ServerManager.getInstance().getCity(end_position);
     }
 
     public String getDepartureTime() {
@@ -74,6 +77,44 @@ public class Ride {
         if (reservations.size() < vacancies) {
             reservations.add(name);
         }
+    }
+
+    public boolean isCityNeighbor(City city) {
+        double distance = distanceToLine(city);
+        if (distance > pd) return false;
+        return isCityInBorder(city, distance);
+    }
+
+    public double distanceToLine(City other) {
+        City start_city = getStartPosition();
+        City end_city = getEndPosition();
+        assert start_city != null && end_city != null;
+        double dx = end_city.getX() - start_city.getX();
+        double dy = end_city.getY() - start_city.getY();
+        double m = Double.POSITIVE_INFINITY;
+        double distance = abs(start_city.getX() - other.getX());
+        if (dx != 0) {
+            m = dy / dx;
+            double c = -(start_city.getY() - m * start_city.getX());
+            double a = -m;
+            double b = 1;
+            distance = abs(a * other.getX() + b * other.getY() + c) / sqrt(pow(a, 2) + pow(b, 2));
+        }
+        return distance;
+    }
+
+    private double distanceBetween(City lhs, City rhs) {
+        double dx = abs(rhs.getX() - lhs.getX());
+        double dy = abs(rhs.getY() - lhs.getY());
+        return sqrt(pow(dx, 2) + pow(dy, 2));
+    }
+
+    private boolean isCityInBorder(City city, double distance) {
+        double d1 = distanceBetween(city, getStartPosition());
+        double d2 = distanceBetween(city, getEndPosition());
+        double angel1 = asin(distance / d1);
+        double angel2 = asin(distance / d2);
+        return angel1 < PI / 2 && angel2 < PI / 2;
     }
 
     @Override

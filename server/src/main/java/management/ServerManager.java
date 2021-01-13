@@ -26,7 +26,7 @@ public class ServerManager {
     private Logger logger;
 
     public ArrayList<String> getLeaderShards() {
-        return leader_shards;
+        return primary_shards;
     }
 
     /**
@@ -40,7 +40,7 @@ public class ServerManager {
     /**
      * Maps shard name to its server leader name
      */
-    private Map<String, Server> shard_leaders;
+    private Map<String, Server> system_shards;
 
     /**
      * Contains all servers in the system (dead and alive!)
@@ -51,7 +51,7 @@ public class ServerManager {
     /**
      * Represents the name of the shards that this server is leader for.
      */
-    private ArrayList<String> leader_shards;
+    private ArrayList<String> primary_shards;
 
     /**
      * Represents all the rides from cities which this leader is responsible for (@field shards)
@@ -66,10 +66,11 @@ public class ServerManager {
     private ServerManager() {
         cities = new HashSet<>();
         rides = new ArrayList<>();
-        shard_leaders = new HashMap<>();
-        leader_shards = new ArrayList<>();
+        system_shards = new HashMap<>();
+        primary_shards = new ArrayList<>();
         system_servers = new HashMap<>();
     }
+
 
     public static ServerManager getInstance() {
         if (instance == null) {
@@ -109,7 +110,6 @@ public class ServerManager {
             String grpc_address = server_object.get("grpc-address").toString();
             String rest_address = server_object.get("rest-address").toString();
             JSONArray server_shards = (JSONArray) server_object.get("shards");
-            System.out.println(server_shards);
             Server server = new Server(serverName, grpc_address, rest_address);
             ArrayList<String> shards = new ArrayList<>();
             shards.addAll(server_shards);
@@ -127,13 +127,16 @@ public class ServerManager {
     public boolean start() {
         ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
         rootLogger.setLevel(ch.qos.logback.classic.Level.ERROR);
-
         zk.connect();
+        zk.updateCityNeighbor(cities.stream().findAny().get(), null, 12);
         GrpcMain.run(current_server.getGrpcPort());
         RestMain.run(current_server.getRestAddress());
         return true;
     }
 
+    /**
+     * bradcast a given ride to all the followers. Invoked by a leader.
+     */
     public String broadcastRide(Ride ride) {
         City start_city = cities.stream().filter(city -> {
             return city.getName().equals(ride.getStartPosition());
@@ -157,12 +160,13 @@ public class ServerManager {
         }).findAny().orElse(null);
 
         assert needed_city != null;
-        return shard_leaders.get(needed_city.getShard());
+        return system_shards.get(needed_city.getShard());
     }
 
     public String saveRide(Ride ride) {
-        Server leader_server = getLeader(ride.getStartPosition());
+        Server leader_server = getLeader(ride.getStartPosition().getName());
         if (current_server.getName().equals(leader_server.getName())) {
+            updateZk(ride, ride.getVacancies());
             addRide(ride);
             broadcastRide(ride);
             return ride.toString();
@@ -170,6 +174,17 @@ public class ServerManager {
         sscClient grpc_client = new sscClient(leader_server.getGrpcAddress());
         grpc_client.addRideLeader(ride); // @TODO: add retry for a couple of times in case the leader failed while broadcasting - we want to send this to the new leader
         return ride.toString();
+    }
+
+    /**
+     * add info abou the ride in zookeeper for the neighbors.
+     */
+    public void updateZk(Ride ride, int offset) {
+        cities.stream()
+                .filter(city ->
+                        !getLeader(city.getName()).getName().equals(current_server.getName()) &&
+                                ride.isCityNeighbor(city)
+                ).forEach(city -> zk.updateCityNeighbor(city, ride, offset));
     }
 
     /**
@@ -220,9 +235,9 @@ public class ServerManager {
     }
 
     public String getSnapshot() {
-        CountDownLatch latch = new CountDownLatch(shard_leaders.size());
+        CountDownLatch latch = new CountDownLatch(system_shards.size());
         ArrayList<String> rides = new ArrayList<>();
-        for (Server server : shard_leaders.values()) {
+        for (Server server : system_shards.values()) {
             sscClient grpc_client = new sscClient(server.getGrpcAddress());
             grpc_client.getRides(rides, latch);
         }
@@ -252,7 +267,7 @@ public class ServerManager {
 
 
         public Server(String name) {
-            this(name,"","");
+            this(name, "", "");
         }
 
         public Server(String name, String grpc_address, String rest_address) {
@@ -330,19 +345,23 @@ public class ServerManager {
         return system_servers.values();
     }
 
-    public Map<String, Server> getShard_leaders() {
-        return shard_leaders;
+    public Map<String, Server> getSystem_shards() {
+        return system_shards;
     }
 
 
     public void updateShardLeader(String shard, Server server) {
         logger.log(Level.INFO, "new shard leader" + shard + " server=" + server.getName());
-        shard_leaders.put(shard, server);
+        system_shards.put(shard, server);
     }
 
     public void updateAliveServers(List<String> alive) {
         Server.killAll();
         alive.forEach(server_name -> system_servers.get(server_name).heartbeat());
+    }
+
+    public City getCity(String city_name) {
+        return cities.stream().filter(city -> city.getName().equals(city_name)).findAny().orElse(null);
     }
 
     private Map<String, Object> getJsonMap(String file_path) {
@@ -362,4 +381,6 @@ public class ServerManager {
         }
         return json_data;
     }
+
+
 }

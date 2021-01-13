@@ -33,7 +33,7 @@ public class sscService extends sscGrpc.sscImplBase {
     public void getRides(generated.emptyMessage request, StreamObserver<generated.response> responseObserver) {
         ServerManager.getInstance().getRides().stream().filter((element) -> {
             ServerManager sm = ServerManager.getInstance();
-            return sm.getLeaderShards().contains(sm.getCityShard(element.getStartPosition()));
+            return sm.getLeaderShards().contains(sm.getCityShard(element.getStartPosition().getName()));
         }).forEach((ride) -> {
             responseObserver.onNext(response.newBuilder().setMsg(ride.toString()).build());
         });

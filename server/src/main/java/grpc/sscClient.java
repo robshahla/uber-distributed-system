@@ -36,12 +36,7 @@ public class sscClient {
                         .setFirstName("Emil").setLastName("Kh").setPhone("05000").setStartPosition("A")
                         .setEndPosition("B").setDepartureTime("11/2/2020").setVacancies(3).setPd(4).build();
 
-        try {
-            blockingStub.upsert(request);
-
-        } catch (StatusRuntimeException e) {
-            e.printStackTrace();
-        }
+        blockingStub.upsert(request);
     }
 
     public String addRideLeader(Ride msg) {
@@ -76,8 +71,8 @@ public class sscClient {
                 .setFirstName(msg.getFirstName())
                 .setLastName(msg.getLastName())
                 .setPhone(msg.getPhone())
-                .setStartPosition(msg.getStartPosition())
-                .setEndPosition(msg.getEndPosition())
+                .setStartPosition(msg.getStartPosition().getName())
+                .setEndPosition(msg.getEndPosition().getName())
                 .setDepartureTime(msg.getDepartureTime())
                 .setVacancies(msg.getVacancies())
                 .setPd(msg.getPd())

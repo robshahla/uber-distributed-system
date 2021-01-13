@@ -90,3 +90,8 @@ test {
 }
 
 
+jar{
+    manifest{
+        attributes 'Main-Class': "Main"
+    }
+}

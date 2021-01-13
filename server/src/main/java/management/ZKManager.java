@@ -1,13 +1,24 @@
 package management;
 
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
+import entities.City;
+import entities.Ride;
 import org.apache.zookeeper.*;
+import org.apache.zookeeper.data.Stat;
+
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Comparator;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Logger;
+
 
 public class ZKManager {
     private final CountDownLatch connectedSignal = new CountDownLatch(1);
@@ -80,10 +91,47 @@ public class ZKManager {
         }
     };
 
+    public boolean updateCityNeighbor(City city, Ride ride, int offset) {
+        String city_path = Paths.get(ZKPaths.CITIES, city.getName(), ride.getStartPosition().getName()).toString();
+        Stat child_state = new Stat();
+        byte[] child_data;
+        JsonObject json_data = new JsonObject();
+        var ref = new Object() {
+            int new_val = -1;
+        };
+        try {
+            child_data = zooKeeper.getData(city_path, false, null);
+            json_data = JsonParser.parseString(new String(child_data, StandardCharsets.UTF_8)).getAsJsonObject();
+            Optional<JsonElement> optionalJsonElement = Optional.of(json_data.get(ride.getEndPosition().getName()));
+            ref.new_val = offset;
+            optionalJsonElement.ifPresent(jsonElement -> ref.new_val += jsonElement.getAsInt());
+            assert ref.new_val >= 0;
+            json_data.add(ride.getEndPosition().getName(), new JsonPrimitive(ref.new_val));
+        } catch (KeeperException e) {
+            if (e.code() == KeeperException.Code.NONODE) {
+                assert offset > 0;
+                ref.new_val = offset;
+                json_data.add(ride.getEndPosition().getName(), new JsonPrimitive(offset));
+                try {
+                    zooKeeper.create(city_path, json_data.toString().getBytes(StandardCharsets.UTF_8), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                } catch (KeeperException | InterruptedException keeperException) {
+                    keeperException.printStackTrace();
+                    return false;
+                }
+            } else {
+                e.printStackTrace();
+                return false;
+            }
+        } catch (InterruptedException ignored) {
+
+        }
+        return false;
+    }
 
     private static class ZKPaths {
         public static String ROOT = "/";
         public static String ELECTIONS = Paths.get(ROOT, "elections").toString();
         public static String ACTIVE = Paths.get(ROOT, "active").toString();
+        public static String CITIES = Paths.get(ROOT, "cities").toString();
     }
 }

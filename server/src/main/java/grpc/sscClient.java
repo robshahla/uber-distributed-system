@@ -1,5 +1,6 @@
 package grpc;
 
+import entities.Reservation;
 import entities.Ride;
 import generated.*;
 import io.grpc.Channel;
@@ -9,6 +10,7 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -98,5 +100,20 @@ public class sscClient {
                 latch.countDown();
             }
         });
+    }
+
+    public Ride reserveRideLeader(Reservation msg) {
+        reservation request = getReservationRequest(msg);
+        return new Ride(blockingStub.withDeadlineAfter(3, TimeUnit.SECONDS).reserveRideLeader(request));
+    }
+
+    private reservation getReservationRequest(Reservation msg) {
+        return reservation.newBuilder()
+                .setFirstName(msg.getFirstName())
+                .setLastName(msg.getLastName())
+                .setDepartureTime(msg.getDepartureTime())
+                .setPath(String.join(",", msg.getPath()))
+                .build();
+
     }
 }

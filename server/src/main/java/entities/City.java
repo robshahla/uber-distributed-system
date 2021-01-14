@@ -38,4 +38,5 @@ public class City {
                 ", shard='" + shard + '\'' +
                 '}';
     }
+
 }

@@ -1,13 +1,17 @@
 package entities;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import generated.ride;
 import management.ServerManager;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import static java.lang.Math.*;
 
-public class Ride {
+public class Ride implements Serializable {
 
     private int id;
     private final String first_name, last_name, phone, start_position, end_position, departure_time;
@@ -135,4 +139,14 @@ public class Ride {
                 ", reservations=" + String.join(",", reservations) +
                 '}';
     }
+
+    public String serialize() {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.add("first_name", new JsonPrimitive(first_name));
+        jsonObject.add("last_name", new JsonPrimitive(last_name));
+        jsonObject.add("phone", new JsonPrimitive(phone));
+        jsonObject.add("start_position", new JsonPrimitive(start_position));
+        return jsonObject.toString();
+    }
+
 }

@@ -1,5 +1,7 @@
 package entities;
 
+import generated.reservation;
+
 public class Reservation {
 
     private final String first_name, last_name, departure_time;
@@ -10,6 +12,12 @@ public class Reservation {
         this.last_name = last_name;
         this.path = path;
         this.departure_time = departure_time;
+    }
+
+    public Reservation(reservation request) {
+        this(request.getFirstName(),
+                request.getLastName(),
+                request.getDepartureTime(), request.getPath());
     }
 
     public String[] getPath() {
@@ -24,7 +32,7 @@ public class Reservation {
         return last_name;
     }
 
-    public String getDate() {
+    public String getDepartureTime() {
         return departure_time;
     }
 }

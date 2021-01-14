@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import entities.City;
+import entities.Reservation;
 import entities.Ride;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
@@ -15,9 +16,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 
 public class ZKManager {
@@ -100,6 +102,40 @@ public class ZKManager {
             createCityNeighbor(city_path, ride, offset);
         }
         return false;
+    }
+
+    private List<String> getCityData(String path) {
+        List<String> result_cities = new ArrayList<>();
+        JsonObject json_data = new JsonObject();
+        Stat znode_stat = new Stat();
+        try {
+            byte[] znode_data = zooKeeper.getData(path, false, znode_stat);
+            json_data = JsonParser.parseString(new String(znode_data, StandardCharsets.UTF_8)).getAsJsonObject();
+            for (Map.Entry<String, JsonElement> entries : json_data.entrySet()) {
+                assert (entries.getValue().getAsInt() > 0);
+                result_cities.add(entries.getKey());
+            }
+        } catch (KeeperException | InterruptedException e) {
+        }
+        return result_cities;
+    }
+
+    public Set<String> getCityNeighborFor(String start_city, String end_city) {
+        String city_path = Paths.get(ZKPaths.CITIES, start_city).toString();
+        List<String> city_child;
+        Set<String> result_cities = new HashSet<>();
+        try {
+            city_child = zooKeeper.getChildren(city_path, false);
+            city_child.forEach(child -> {
+                boolean good_child = getCityData(Paths.get(city_path, child).toString()).stream()
+                        .anyMatch(end_point -> end_point.equals(end_city));
+                if (good_child) result_cities.add(child);
+            });
+
+        } catch (KeeperException | InterruptedException e) {
+            e.printStackTrace();
+        }
+        return result_cities;
     }
 
     /**

@@ -18,6 +18,7 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 
 public class ServerManager {
@@ -128,7 +129,6 @@ public class ServerManager {
         ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
         rootLogger.setLevel(ch.qos.logback.classic.Level.ERROR);
         zk.connect();
-        zk.updateCityNeighbor(cities.stream().findAny().get(), null, 12);
         GrpcMain.run(current_server.getGrpcPort());
         RestMain.run(current_server.getRestAddress());
         return true;
@@ -178,14 +178,16 @@ public class ServerManager {
     }
 
     /**
-     * add info abou the ride in zookeeper for the neighbors.
+     * add info about the ride in zookeeper for the neighbors.
      */
     public void updateZk(Ride ride, int offset) {
         cities.stream()
-                .filter(city ->
-                        !getLeader(city.getName()).getName().equals(current_server.getName()) &&
-                                ride.isCityNeighbor(city)
-                ).forEach(city -> zk.updateCityNeighbor(city, ride, offset));
+                .filter(city -> {
+                    boolean is_start = ride.getStartPosition().getName().equals(city.getName());
+                    boolean is_end = ride.getEndPosition().getName().equals(city.getName());
+                    return is_start || ((!is_end) && ride.isCityNeighbor(city));
+                })
+                .forEach(city -> zk.updateCityNeighbor(city, ride, offset));
     }
 
     /**
@@ -211,27 +213,30 @@ public class ServerManager {
     public String reserveRide(Reservation reservation) {
         assert reservation.getPath().length >= 2; // we assume that a client won't request a reservation with a path of length less than 2
         if (reservation.getPath().length == 2) {
-            return reserveOneRide(reservation);
+//            return reserveOneRide(reservation);
         }
 
         // return reservePath(reservation); // TODO: should think how to implement this
         return ""; // TODO: remove
     }
 
-    public String reserveOneRide(Reservation reservation) {
-        Server leader_server = getLeader(reservation.getPath()[0]);
-        if (current_server.getName().equals(leader_server.getName())) {
-
-            Ride ride = addReservation(reservation);
-            if (ride.equals("No ride was found")) {
-                return "ride";
+    public synchronized Ride reserveOneRide(Reservation reservation) {
+        Set<String> potential_neighbors = zk.getCityNeighborFor(reservation.getPath()[0], reservation.getPath()[1]);
+        Set<Server> potential_leaders = potential_neighbors.stream().map(this::getLeader)
+                .collect(Collectors.toSet());
+        for (Server leader: potential_leaders) {
+            if (leader.getName().equals(current_server.getName())) {
+                Ride ride = addReservation(reservation);
+                if (ride != null) {
+//                broadcastReservation();
+                }
             }
-            //broadcastReservation()
-            return "ride";
+            sscClient grpc_client = new sscClient(leader.getGrpcAddress());
+//            Ride ride = grpc_client.reserveRideLeader(reservation);
+//            if (ride != null)
+//                return ride;
         }
-        sscClient grpc_client = new sscClient(leader_server.getGrpcAddress());
-//        return grpc_client.reserveRideLeader(reservation); // @TODO: add retry for a couple of times in case the leader failed while broadcasting - we want to send this to the new leader, this should be idempotent
-        return ""; // TODO: remove
+        return null;
     }
 
     public Ride addReservation(Reservation reservation) {

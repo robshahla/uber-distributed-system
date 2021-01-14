@@ -1,5 +1,6 @@
 package grpc;
 
+import entities.Reservation;
 import entities.Ride;
 import generated.*;
 import io.grpc.stub.StreamObserver;
@@ -58,6 +59,16 @@ public class sscService extends sscGrpc.sscImplBase {
         Ride ride = new Ride(request);
         sm.addRide(ride);
         responseObserver.onNext(response.newBuilder().build());
+        responseObserver.onCompleted();
+    }
+
+
+    @Override
+    public void reserveRideLeader(reservation request, StreamObserver<ride> responseObserver) {
+        ServerManager sm = ServerManager.getInstance();
+        Reservation reservation = new Reservation(request);
+        Ride ride = sm.addReservation(reservation);
+//        responseObserver.onNext(get);
         responseObserver.onCompleted();
     }
 }

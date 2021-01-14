@@ -11,7 +11,7 @@ service  ssc{
   rpc getRides(emptyMessage) returns (response) {}
   rpc addRideLeader(ride) returns (response) {}
   rpc addRideFollower(ride) returns (response) {}
-  rpc reserveRideLeader(reservation) returns (response) {}
+  rpc reserveRideLeader(reservation) returns (ride) {}
 }
 
 message emptyMessage {}
@@ -32,8 +32,8 @@ message ride {
 }
 
 message reservation {
-  string start_position = 1;
-  string end_position = 2;
+  string first_name = 1;
+  string last_name = 2;
   string departure_time = 3;
   string path = 4;
 }

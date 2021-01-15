@@ -1,5 +1,7 @@
 package grpc;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import entities.Reservation;
 import entities.Ride;
 import generated.*;
@@ -41,9 +43,11 @@ public class sscClient {
         blockingStub.upsert(request);
     }
 
-    public String addRideLeader(Ride msg) {
+    public Ride addRideLeader(Ride msg) {
         ride request = getRideRequest(msg);
-        return blockingStub.withDeadlineAfter(3, TimeUnit.SECONDS).addRideLeader(request).getMsg(); // @TODO: decide how to use deadline for the retries with different leaders... exponential backoff until a threshold of 1 second for example.
+        String new_ride = blockingStub.withDeadlineAfter(3, TimeUnit.SECONDS).addRideLeader(request).getMsg(); // @TODO: decide how to use deadline for the retries with different leaders... exponential backoff until a threshold of 1 second for example.
+        JsonObject obj = JsonParser.parseString(new_ride).getAsJsonObject();
+        return Ride.deserialize(obj);
     }
 
     public void addRideFollower(Ride msg) {

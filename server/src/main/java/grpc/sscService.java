@@ -4,6 +4,7 @@ import entities.Reservation;
 import entities.Ride;
 import generated.*;
 import io.grpc.stub.StreamObserver;
+import management.RestManager;
 import management.ServerManager;
 
 import java.util.*;
@@ -45,7 +46,7 @@ public class sscService extends sscGrpc.sscImplBase {
     public void addRideLeader(ride request, StreamObserver<response> responseObserver) {
         ServerManager sm = ServerManager.getInstance();
         Ride ride = new Ride(request);
-        String result = sm.saveRide(ride);
+        String result = sm.addRideBroadCast(ride).serialize();
         responseObserver.onNext(response.newBuilder().setMsg(result).build());
         responseObserver.onCompleted();
     }

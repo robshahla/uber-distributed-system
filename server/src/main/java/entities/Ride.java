@@ -1,6 +1,6 @@
 package entities;
 
-import com.google.gson.JsonElement;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import generated.ride;
@@ -8,6 +8,7 @@ import management.ServerManager;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Objects;
 
 import static java.lang.Math.*;
 
@@ -19,7 +20,8 @@ public class Ride implements Serializable {
     double pd;
     ArrayList<String> reservations;
 
-    public Ride(String first_name, String last_name, String phone, String start_position, String end_position, String departure_time, int vacancies, double pd) {
+    public Ride(String first_name, String last_name, String phone, String start_position,
+                String end_position, String departure_time, int vacancies, double pd) {
         this.first_name = first_name;
         this.last_name = last_name;
         this.phone = phone;
@@ -28,6 +30,7 @@ public class Ride implements Serializable {
         this.departure_time = departure_time;
         this.vacancies = vacancies;
         this.pd = pd;
+        this.id = -1;
     }
 
     public Ride(ride request) {
@@ -41,8 +44,13 @@ public class Ride implements Serializable {
         this.pd = request.getPd();
     }
 
+
     public void setId(int id) {
         this.id = id;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public String getFirstName() {
@@ -81,6 +89,20 @@ public class Ride implements Serializable {
         if (reservations.size() < vacancies) {
             reservations.add(name);
         }
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Ride ride = (Ride) o;
+        return vacancies == ride.vacancies && Double.compare(ride.pd, pd) == 0 && first_name.equals(ride.first_name) && last_name.equals(ride.last_name) && phone.equals(ride.phone) && start_position.equals(ride.start_position) && end_position.equals(ride.end_position) && departure_time.equals(ride.departure_time) && reservations.equals(ride.reservations);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(first_name, last_name, phone, start_position, end_position, departure_time, vacancies, pd, reservations);
     }
 
     /**
@@ -126,27 +148,56 @@ public class Ride implements Serializable {
 
     @Override
     public String toString() {
-        return "Ride{" +
-                "id=" + id +
-                ", first_name='" + first_name + '\'' +
-                ", last_name='" + last_name + '\'' +
-                ", phone='" + phone + '\'' +
-                ", start_position='" + start_position + '\'' +
-                ", end_position='" + end_position + '\'' +
-                ", departure_time='" + departure_time + '\'' +
-                ", vacancies=" + vacancies +
-                ", pd=" + pd +
-                ", reservations=" + String.join(",", reservations) +
-                '}';
+        return serialize();
+    }
+
+
+    private static class Fields {
+        private static final String ID = "id";
+        private static final String FIRST_NAME = "first_name";
+        private static final String LAST_NAME = "last_name";
+        private static final String PHONE = "phone";
+        private static final String START_POSITION = "start_position";
+        private static final String END_POSITION = "end_position";
+        private static final String DEPARTURE_TIME = "departure_time";
+        private static final String VACANCIES = "vacancies";
+        private static final String PERMITTED_DEVIATION = "pd";
+        private static final String RESERVATIONS = "reservations";
+
     }
 
     public String serialize() {
         JsonObject jsonObject = new JsonObject();
-        jsonObject.add("first_name", new JsonPrimitive(first_name));
-        jsonObject.add("last_name", new JsonPrimitive(last_name));
-        jsonObject.add("phone", new JsonPrimitive(phone));
-        jsonObject.add("start_position", new JsonPrimitive(start_position));
+        jsonObject.add(Fields.ID, new JsonPrimitive(id));
+        jsonObject.add(Fields.FIRST_NAME, new JsonPrimitive(first_name));
+        jsonObject.add(Fields.LAST_NAME, new JsonPrimitive(last_name));
+        jsonObject.add(Fields.PHONE, new JsonPrimitive(phone));
+        jsonObject.add(Fields.START_POSITION, new JsonPrimitive(start_position));
+        jsonObject.add(Fields.END_POSITION, new JsonPrimitive(end_position));
+        jsonObject.add(Fields.DEPARTURE_TIME, new JsonPrimitive(departure_time));
+        jsonObject.add(Fields.VACANCIES, new JsonPrimitive(vacancies));
+        jsonObject.add(Fields.PERMITTED_DEVIATION, new JsonPrimitive(pd));
+        JsonArray reservations_array = new JsonArray();
+        reservations.forEach(reservations_array::add);
+        jsonObject.add(Fields.RESERVATIONS, reservations_array);
         return jsonObject.toString();
+    }
+
+    public static Ride deserialize(JsonObject json_object) {
+        int id = json_object.get(Fields.ID).getAsInt();
+        String firstName = json_object.get(Fields.FIRST_NAME).getAsString();
+        String lastName = json_object.get(Fields.LAST_NAME).getAsString();
+        String phone = json_object.get(Fields.PHONE).getAsString();
+        String startPosition = json_object.get(Fields.START_POSITION).getAsString();
+        String endPosition = json_object.get(Fields.END_POSITION).getAsString();
+        String departureTime = json_object.get(Fields.DEPARTURE_TIME).getAsString();
+        int vacancies = json_object.get(Fields.VACANCIES).getAsInt();
+        double pd = json_object.get(Fields.PERMITTED_DEVIATION).getAsDouble();
+        Ride ride = new Ride(firstName, lastName, phone, startPosition, endPosition, departureTime, vacancies, pd);
+        JsonArray reservations = json_object.get(Fields.RESERVATIONS).getAsJsonArray();
+        reservations.forEach(reserve -> ride.reserve(reserve.getAsString()));
+        ride.setId(id);
+        return ride;
     }
 
 }

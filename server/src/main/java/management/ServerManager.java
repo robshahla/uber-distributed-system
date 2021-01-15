@@ -1,12 +1,17 @@
 package management;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import entities.City;
 import entities.Reservation;
 import entities.Ride;
+import entities.Server;
 import grpc.GrpcMain;
 import grpc.sscClient;
-
-import org.json.simple.*;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.LoggerFactory;
@@ -14,6 +19,7 @@ import rest.host.RestMain;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
@@ -57,7 +63,7 @@ public class ServerManager {
     /**
      * Represents all the rides from cities which this leader is responsible for (@field shards)
      */
-    private ArrayList<Ride> rides;
+    private final ArrayList<Ride> rides;
 
     private static ServerManager instance = null;
 
@@ -104,6 +110,7 @@ public class ServerManager {
         });
 
         // initializing servers array
+        Set<String> system_shards_aux = new HashSet<>();
         JSONArray servers_array = (JSONArray) json_data.get("servers");
         servers_array.forEach(obj -> {
             JSONObject server_object = (JSONObject) obj;
@@ -112,83 +119,61 @@ public class ServerManager {
             String rest_address = server_object.get("rest-address").toString();
             JSONArray server_shards = (JSONArray) server_object.get("shards");
             Server server = new Server(serverName, grpc_address, rest_address);
-            ArrayList<String> shards = new ArrayList<>();
-            shards.addAll(server_shards);
+            ArrayList<String> shards = new ArrayList<String>(server_shards);
+            system_shards_aux.addAll(shards);
             server.setShards(shards);
             system_servers.put(serverName, server);
-
             if (serverName.equals(server_name)) {
                 this.current_server = server;
             }
 
         });
+        system_shards_aux.forEach(shard -> system_shards.put(shard, null));
         return true;
     }
 
     public boolean start() {
         ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
         rootLogger.setLevel(ch.qos.logback.classic.Level.ERROR);
-        zk.connect();
-        GrpcMain.run(current_server.getGrpcPort());
-        RestMain.run(current_server.getRestAddress());
+        if (!zk.connect()) return false;
+        GrpcMain.run("8000");
+        RestMain.run("8080");
         return true;
     }
 
-    /**
-     * bradcast a given ride to all the followers. Invoked by a leader.
-     */
-    public String broadcastRide(Ride ride) {
-        City start_city = cities.stream().filter(city -> {
-            return city.getName().equals(ride.getStartPosition());
-        }).findAny().orElse(null);
-        assert start_city != null;
-        system_servers.values().stream()
-                .filter(server -> server.shards.contains(start_city.getShard()))
-                .forEach(server -> {
-                    sscClient grpc_client = new sscClient(server.getGrpcAddress());
-                    grpc_client.addRideFollower(ride);
-                });
-        return "";
-    }
 
     /**
      * given a city name, return the current leader server for this city.
      */
     public Server getLeader(String start_city) {
-        City needed_city = cities.stream().filter(city -> {
-            return city.getName().equals(start_city);
-        }).findAny().orElse(null);
+        City needed_city = cities.stream().filter(city -> city.getName().equals(start_city))
+                .findAny().orElse(null);
 
         assert needed_city != null;
         return system_shards.get(needed_city.getShard());
     }
 
-    public String saveRide(Ride ride) {
-        Server leader_server = getLeader(ride.getStartPosition().getName());
-        if (current_server.getName().equals(leader_server.getName())) {
-            assert ride.getVacancies() > 0;
-            updateZk(ride, ride.getVacancies());
-            addRide(ride); // might need to invoke before `updateZk`
-            broadcastRide(ride);
-            return ride.toString();
-        }
-        sscClient grpc_client = new sscClient(leader_server.getGrpcAddress());
-        grpc_client.addRideLeader(ride); // @TODO: add retry for a couple of times in case the leader failed while broadcasting - we want to send this to the new leader
-        return ride.toString();
+    public Set<Server> getCityFollowers(City needed_city) {
+        Server leader_server = system_shards.get(needed_city.getShard());
+        String city_shard = needed_city.getShard();
+        return system_servers.values().stream()
+                .filter(server -> !server.getName().equals(leader_server.getName()) && server.getShards().contains(city_shard))
+                .collect(Collectors.toSet());
+
     }
 
-    /**
-     * add info about the ride in zookeeper for the neighbors.
-     */
-    public void updateZk(Ride ride, int offset) {
-        cities.stream()
-                .filter(city -> {
-                    boolean is_start = ride.getStartPosition().getName().equals(city.getName());
-                    boolean is_end = ride.getEndPosition().getName().equals(city.getName());
-                    return is_start || ((!is_end) && ride.isCityNeighbor(city));
-                })
-                .forEach(city -> zk.updateCityNeighbor(city, ride, offset));
+    public Ride addRideBroadCast(Ride ride) {
+        assert ride.getVacancies() > 0;
+        assert getServer().getName().equals(getLeader(ride.getStartPosition().getName()).getName());
+        Ride result_ride = addRide(ride);
+        if (result_ride.getId() < 0) {
+            result_ride.setId(zk.generateUniqueId());
+        }
+        Set<Server> followers = ServerManager.getInstance().getCityFollowers(result_ride.getStartPosition());
+        zk.atomicBroadCastMessage(followers, MessageFactory.newRideBroadCastMessage(result_ride));
+        return result_ride; // response to the user.
     }
+
 
     /**
      * add a given ride to the rides array only if there doesn't exist another ride with the same parameters.
@@ -196,47 +181,15 @@ public class ServerManager {
      * others didn't (this happens if the leader fails while broadcasting). To prevent this we retry with several leaders, and thus,
      * a new leader will broadcast again, and a follower might receive a command to add the same ride several times.
      */
-    public void addRide(Ride ride) {
-        boolean ride_exists = rides.stream().anyMatch(element ->
-                element.getFirstName().equals(ride.getFirstName()) &&
-                        element.getLastName().equals(ride.getLastName()) &&
-                        element.getStartPosition().equals(ride.getStartPosition()) &&
-                        element.getDepartureTime().equals(ride.getDepartureTime()));
-        if (!ride_exists) {
-            rides.add(ride);
-        }
-    }
-
-    /**
-     * we get here from the REST call
-     */
-    public String reserveRide(Reservation reservation) {
-        assert reservation.getPath().length >= 2; // we assume that a client won't request a reservation with a path of length less than 2
-        if (reservation.getPath().length == 2) {
-//            return reserveOneRide(reservation);
-        }
-
-        // return reservePath(reservation); // TODO: should think how to implement this
-        return ""; // TODO: remove
-    }
-
-    public synchronized Ride reserveOneRide(Reservation reservation) {
-        Set<String> potential_neighbors = zk.getCityNeighborFor(reservation.getPath()[0], reservation.getPath()[1]);
-        Set<Server> potential_leaders = potential_neighbors.stream().map(this::getLeader)
-                .collect(Collectors.toSet());
-        for (Server leader: potential_leaders) {
-            if (leader.getName().equals(current_server.getName())) {
-                Ride ride = addReservation(reservation);
-                if (ride != null) {
-//                broadcastReservation();
-                }
+    public Ride addRide(Ride ride) {
+        synchronized (this.rides) {
+            Ride existing_ride = this.rides.stream().filter(ride::equals).findAny().orElse(null);
+            if (existing_ride == null) {
+                rides.add(ride);
+                return ride;
             }
-            sscClient grpc_client = new sscClient(leader.getGrpcAddress());
-//            Ride ride = grpc_client.reserveRideLeader(reservation);
-//            if (ride != null)
-//                return ride;
+            return existing_ride;
         }
-        return null;
     }
 
     public Ride addReservation(Reservation reservation) {
@@ -269,76 +222,6 @@ public class ServerManager {
     }
 
 
-    public static class Server {
-        private final String name;
-        private String grpc_address, rest_address;
-        private ArrayList<String> shards;
-        private long heartbeat_time = 0;
-        private static long current_time = 0;
-
-
-        public Server(String name) {
-            this(name, "", "");
-        }
-
-        public Server(String name, String grpc_address, String rest_address) {
-            this.name = name;
-            this.grpc_address = grpc_address;
-            this.rest_address = rest_address;
-            heartbeat();
-        }
-
-        public ArrayList<String> getShards() {
-            return shards;
-        }
-
-        public void setShards(ArrayList<String> shards) {
-            this.shards = shards;
-        }
-
-        @Override
-        public String toString() {
-            return "Server{" +
-                    "name='" + name + '\'' +
-                    ", grpc_address='" + grpc_address + '\'' +
-                    ", rest_address='" + rest_address + '\'' +
-                    '}';
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getGrpcAddress() {
-            return grpc_address;
-        }
-
-        public String getGrpcPort() {
-            return grpc_address.split(":")[1];
-        }
-
-        public String getRestPort() {
-            return rest_address.split(":")[1];
-        }
-
-        public String getRestAddress() {
-            return rest_address.split(":")[1];
-        }
-
-        public boolean isAlive() {
-            return heartbeat_time == current_time;
-        }
-
-        public void heartbeat() {
-            heartbeat_time = current_time;
-        }
-
-        public static void killAll() {
-            current_time++;
-        }
-
-    }
-
     public String getCityShard(String city_name) {
         City city = cities.stream()
                 .filter(elem -> elem.getName().equals(city_name))
@@ -353,15 +236,15 @@ public class ServerManager {
     }
 
     public Collection<Server> getAliveServers() {
-        return system_servers.values();
+        return system_servers.values().stream().filter(Server::isAlive).collect(Collectors.toList());
     }
 
-    public Map<String, Server> getSystem_shards() {
+    public Map<String, Server> getSystemShards() {
         return system_shards;
     }
 
 
-    public void updateShardLeader(String shard, Server server) {
+    public synchronized void updateShardLeader(String shard, Server server) {
         logger.log(Level.INFO, "new shard leader" + shard + " server=" + server.getName());
         system_shards.put(shard, server);
     }
@@ -394,4 +277,31 @@ public class ServerManager {
     }
 
 
+    public static class MessageFactory {
+        public static final String OPERATION = "operation";
+        public static final String DATA = "data";
+
+        public static final String OPERATION_NEW_RIDE = "new-ride";
+
+        private static String newRideBroadCastMessage(Ride new_ride) {
+            JsonObject json_message = new JsonObject();
+            json_message.add(OPERATION, new JsonPrimitive(OPERATION_NEW_RIDE));
+            json_message.add(DATA, JsonParser.parseString(new_ride.serialize()));
+            return json_message.toString();
+        }
+
+        public static void ProcessMessage(byte[] message) {
+            String data_string = new String(message, StandardCharsets.UTF_8);
+            JsonObject json_message = JsonParser.parseString(data_string).getAsJsonObject();
+            JsonElement operation = json_message.get(OPERATION);
+            if (operation != null) {
+                if (operation.getAsString().equals(OPERATION_NEW_RIDE)) {
+                    JsonObject ride_as_json = json_message.get(DATA).getAsJsonObject();
+                    Ride ride_to_add = Ride.deserialize(ride_as_json);
+                    ServerManager.getInstance().addRide(ride_to_add);
+                }
+            }
+        }
+
+    }
 }

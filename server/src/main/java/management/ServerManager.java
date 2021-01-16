@@ -23,16 +23,7 @@ import java.util.stream.Collectors;
 public class ServerManager {
 
 
-    private Logger logger;
-
-    public ArrayList<String> getLeaderShards() {
-        return primary_shards;
-    }
-
-    /**
-     * This server name.
-     */
-    private Server current_server;
+    private static ServerManager instance = null;
     /**
      * Saves All cities in the system.
      */
@@ -41,27 +32,24 @@ public class ServerManager {
      * Maps shard name to its server leader name
      */
     private final Map<String, Server> system_shards;
-
     /**
      * Contains all servers in the system (dead and alive!)
      */
     private final Map<String, Server> system_servers;
-
-
     /**
      * Represents the name of the shards that this server is leader for.
      */
     private final ArrayList<String> primary_shards;
-
     /**
      * Represents all the rides from cities which this leader is responsible for (@field shards)
      */
     private final ArrayList<Ride> rides;
-
-    private static ServerManager instance = null;
-
     public ZKManager zk;
-
+    private Logger logger;
+    /**
+     * This server name.
+     */
+    private Server current_server;
 
     private ServerManager() {
         cities = new HashSet<>();
@@ -71,13 +59,16 @@ public class ServerManager {
         system_servers = new HashMap<>();
     }
 
-
     public static ServerManager getInstance() {
         if (instance == null) {
             instance = new ServerManager();
             instance.logger = Logger.getLogger(ServerManager.class.getName());
         }
         return instance;
+    }
+
+    public ArrayList<String> getLeaderShards() {
+        return primary_shards;
     }
 
     @SuppressWarnings("unchecked")
@@ -130,6 +121,7 @@ public class ServerManager {
         ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
         rootLogger.setLevel(ch.qos.logback.classic.Level.ERROR);
         if (!zk.connect()) return false;
+
         GrpcMain.run(current_server.getGrpcPort());
         RestMain.run(current_server.getRestAddress());
         return true;
@@ -157,14 +149,14 @@ public class ServerManager {
     }
 
     public Ride addRideBroadCast(Ride ride) {
-        assert ride.getVacancies() > 0;
+        assert ride != null && ride.getVacancies() > 0;
         assert getServer().getName().equals(getLeader(ride.getStartPosition().getName()).getName());
         Ride result_ride = addRide(ride);
         if (result_ride.getId() < 0) {
             result_ride.setId(zk.generateUniqueId());
+            Set<Server> followers = ServerManager.getInstance().getCityFollowers(result_ride.getStartPosition());
+            zk.atomicBroadCastMessage(followers, MessagesManager.MessageFactory.newRideBroadCastMessage(result_ride));
         }
-        Set<Server> followers = ServerManager.getInstance().getCityFollowers(result_ride.getStartPosition());
-        zk.atomicBroadCastMessage(followers, MessagesManager.MessageFactory.newRideBroadCastMessage(result_ride));
         return result_ride; // response to the user.
     }
 

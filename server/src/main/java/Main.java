@@ -11,7 +11,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        Level level = Level.CONFIG;
+        Level level = Level.FINE;
         Logger.getLogger("").setLevel(level);
         Arrays.stream(Logger.getLogger("").getHandlers()).forEach(
                 logger -> logger.setLevel(level)

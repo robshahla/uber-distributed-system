@@ -53,6 +53,7 @@ public class RestManager {
                 logger.log(Level.FINE, "Getting rides from the calling server: " + server.getName());
                 synchronized (all_rides) {
                     all_rides.addAll(sm.getRides());
+                    latch.countDown();
                 }
                 return;
             }

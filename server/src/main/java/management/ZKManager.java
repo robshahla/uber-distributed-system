@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static management.MessagesManager.ProcessMessage;
@@ -27,10 +29,22 @@ public class ZKManager {
 
     public ZKManager(String address) {
         host_addr = address;
+        zooKeeper = null;
+    }
+
+    public boolean connectToMailbox() {
+        String server_name = ServerManager.getInstance().getServer().getName();
+        String server_mailbox_path = Paths.get(ZKPaths.MESSAGES, server_name).toString();
+        logger.log(Level.FINER, "Connecting [" + server_name + "] to MailBox");
+        if (createZNode(server_mailbox_path, CreateMode.PERSISTENT) == null) return false;
+        addPersistentZNodeWatch(server_mailbox_path, message_received_watch);
+        logger.log(Level.FINER, "Server [" + server_name + "] connected to mailbox!");
+        return true;
     }
 
     public boolean connect() {
         try {
+            logger.log(Level.FINER, "Connecting to zookeeper on host=" + host_addr);
             zooKeeper = new ZooKeeper(host_addr, SESSION_TIME_OUT, new Watcher() {
                 @Override
                 public void process(WatchedEvent event) {
@@ -38,41 +52,23 @@ public class ZKManager {
                     connectedSignal.countDown();
                 }
             });
-            connectedSignal.await();
-            if (!isConnected) {
+            if (!connectedSignal.await(5, TimeUnit.SECONDS)) {
+                zooKeeper = null;
+                logger.log(Level.SEVERE, "Error connecting to zookeeper! (TIMEOUT)");
                 return false;
             }
-            ServerManager sm = ServerManager.getInstance();
-            Path active_node = Paths.get(ZKPaths.ACTIVE, sm.getServer().getName());
-            zooKeeper.addWatch(ZKPaths.ACTIVE, active_watch, AddWatchMode.PERSISTENT);
-            try {
-                zooKeeper.delete(active_node.toString(), -1);
-            } catch (KeeperException.NoNodeException ignored) {
+            if (!isConnected) {
+                zooKeeper = null;
+                logger.log(Level.SEVERE, "Error connecting to zookeeper! (Fail)");
+                return false;
             }
-            zooKeeper.create(active_node.toString(), null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+            logger.log(Level.FINER, "Connected to zookeeper!");
+            if (!connectToActive()) return false;
 
-            for (String shard : sm.getSystemShards().keySet()) {
-                Path election_path = Paths.get(ZKPaths.ELECTIONS, shard);
-                zooKeeper.addWatch(election_path.toString(), shard_election_watch, AddWatchMode.PERSISTENT);
-                if (sm.getServer().getShards().contains(shard)) {
-                    Path shard_path = Paths.get(election_path.toString(), sm.getServer().getName() + "-");
-                    zooKeeper.create(shard_path.toString(), null,
-                            ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
-                }
-            }
-            sm.getSystemShards().keySet().stream()
-                    .map(shard -> Paths.get(ZKPaths.ELECTIONS, shard))
-                    .forEach(this::updateLeader);
-
-            String server_mailbox_path = Paths.get(ZKPaths.MESSAGES, ServerManager.getInstance().getServer().getName()).toString();
-            try {
-                zooKeeper.create(server_mailbox_path, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            } catch (InterruptedException | KeeperException ignored) {
-
-            }
-            zooKeeper.addWatch(server_mailbox_path, message_received_watch, AddWatchMode.PERSISTENT);
+            //
+            participateInElections();
             return true;
-        } catch (IOException | InterruptedException | KeeperException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
         return false;
@@ -82,15 +78,14 @@ public class ZKManager {
     public int generateUniqueId() {
         String path = ZKPaths.COUNTER;
         String created_id;
-        try {
-            created_id = zooKeeper.create(Paths.get(path, "id-").toString(), null,
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
-            zooKeeper.delete(created_id, -1);
-            return getSequentialNumber(created_id);
-        } catch (KeeperException | InterruptedException e) {
-            System.out.println("ZooKeeper: Error generating unique id"); //should not get here
-        }
-        return -1;
+        logger.log(Level.FINER, "Generating new id...");
+        created_id = createZNode(Paths.get(path, "id-").toString(),
+                CreateMode.EPHEMERAL_SEQUENTIAL);
+        if (created_id == null) return -1;
+        deleteZNode(created_id);
+        int generated_id = getSequentialNumber(created_id);
+        logger.log(Level.FINER, "New Id generated = " + generated_id);
+        return generated_id;
     }
 
 
@@ -118,6 +113,29 @@ public class ZKManager {
     }
 
     //------------------------------------ PRIVATE METHODS -------------------------------------------------
+    private void participateInElections() {
+        ServerManager sm = ServerManager.getInstance();
+        for (String shard : sm.getSystemShards().keySet()) {
+            Path election_path = Paths.get(ZKPaths.ELECTIONS, shard);
+            addPersistentZNodeWatch(election_path.toString(), shard_election_watch);
+            if (sm.getServer().getShards().contains(shard)) {
+                Path shard_path = Paths.get(election_path.toString(), sm.getServer().getName() + "-");
+                createZNode(shard_path.toString(), CreateMode.EPHEMERAL_SEQUENTIAL);
+            }
+        }
+        sm.getSystemShards().keySet().stream()
+                .map(shard -> Paths.get(ZKPaths.ELECTIONS, shard))
+                .forEach(this::updateLeader);
+
+    }
+
+    private boolean connectToActive() {
+        ServerManager sm = ServerManager.getInstance();
+        Path active_node = Paths.get(ZKPaths.ACTIVE, sm.getServer().getName());
+        addPersistentZNodeWatch(ZKPaths.ACTIVE, active_watch);
+        deleteZNode(active_node.toString());
+        return createZNode(active_node.toString(), CreateMode.EPHEMERAL) != null;
+    }
 
     private final Watcher active_watch = (event) -> {
         try {
@@ -181,6 +199,56 @@ public class ZKManager {
         }
     }
 
+
+    private int getSequentialNumber(String node_name) {
+        assert node_name.contains("-");
+        return Integer.parseInt(node_name.substring(node_name.lastIndexOf("-") + 1));
+    }
+
+    private void addPersistentZNodeWatch(String path_to_node, Watcher watcher) {
+        try {
+            logger.log(Level.FINEST, "Adding watch to ZNode [" + path_to_node + "]");
+            zooKeeper.addWatch(path_to_node, watcher, AddWatchMode.PERSISTENT);
+        } catch (KeeperException | InterruptedException e) {
+            logger.log(Level.WARNING, "Failed to add watcher to node [" +
+                    path_to_node +
+                    "]\n\tErrorr:" +
+                    e.getMessage());
+        }
+    }
+
+    private void deleteZNode(String path_to_node) {
+        try {
+            logger.log(Level.FINEST, "Deleting ZNode" +
+                    path_to_node + "]");
+            zooKeeper.delete(path_to_node, -1);
+        } catch (InterruptedException | KeeperException e) {
+            logger.log(Level.WARNING, "Failed to delete  ZNode [" +
+                    path_to_node +
+                    "]\n\tErrorr:" +
+                    e.getMessage());
+        }
+    }
+
+    private String createZNode(String path_to_node, CreateMode mode) {
+        assert zooKeeper != null;
+        try {
+            logger.log(Level.FINEST, "Creating new ZNode (With No data):\n\tpath: ["
+                    + path_to_node + "]\n\tType: [" + mode + "]");
+            String created_node = zooKeeper.create(path_to_node, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, mode);
+            logger.log(Level.FINEST, "Successfully created node: " + created_node);
+            return created_node;
+        } catch (KeeperException | InterruptedException e) {
+            e.printStackTrace();
+            logger.log(Level.WARNING, "Failed to create ZNode: [" +
+                    path_to_node + "]\n\t" +
+                    "Error: " +
+                    e.getMessage());
+        }
+        return null;
+    }
+
+
     private static class ZKPaths {
         public static final String ROOT = "/Uber";
         public static final String ELECTIONS = Paths.get(ROOT, "elections").toString();
@@ -190,8 +258,4 @@ public class ZKManager {
     }
 
 
-    private int getSequentialNumber(String node_name) {
-        assert node_name.contains("-");
-        return Integer.parseInt(node_name.substring(node_name.lastIndexOf("-") + 1));
-    }
 }

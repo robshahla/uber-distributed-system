@@ -11,6 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class MessagesManager {
+    public static MessagesManager instance = new MessagesManager();
     public static final String ROOT_LOG_NAME = "ds-hw2";
     public static final Level LOG_LEVEL = Level.FINER;
     public static final Logger ROOT_LOGGER = Logger.getLogger(ROOT_LOG_NAME);
@@ -42,4 +43,9 @@ public class MessagesManager {
             return json_message.toString();
         }
     }
+
+    public void log(Level level, String str) {
+        System.out.println(str);
+    }
+
 }

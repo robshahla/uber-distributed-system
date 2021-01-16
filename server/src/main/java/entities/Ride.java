@@ -36,7 +36,7 @@ public class Ride implements Serializable {
 
     public Ride(ride request) {
         this(request.getFirstName(),
-                request.getFirstName(),
+                request.getLastName(),
                 request.getPhone(),
                 request.getStartPosition(),
                 request.getEndPosition(),
@@ -149,7 +149,10 @@ public class Ride implements Serializable {
 
     @Override
     public String toString() {
-        return serialize();
+        return "Ride Id: " + id + "\n" +
+                "First Name: " + first_name + "\n" +
+                "Last Name: " + last_name + "\n" +
+                "Phone Number: " + phone + "\n";
     }
 
 

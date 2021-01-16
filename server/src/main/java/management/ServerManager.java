@@ -45,16 +45,19 @@ public class ServerManager {
      */
     private final ArrayList<Ride> rides;
     public ZKManager zk;
-    private static final Logger logger = Logger.getLogger(ServerManager.class.getName());
+    //    private static final Logger logger = Logger.getLogger(ServerManager.class.getName());
+    private static MessagesManager logger = MessagesManager.instance;
     /**
      * This server name.
      */
     private Server current_server;
 
 
-    static {
-        logger.setParent(MessagesManager.ROOT_LOGGER);
-    }
+//    static {
+//        logger.setParent(MessagesManager.ROOT_LOGGER);
+//        logger.setLevel(MessagesManager.LOG_LEVEL);
+//        logger.setUseParentHandlers(true);
+//    }
 
     private ServerManager() {
         cities = new HashSet<>();
@@ -126,9 +129,15 @@ public class ServerManager {
 //        rootLogger.setLevel(ch.qos.logback.classic.Level.ALL);
         if (!zk.connect()) return false;
 
-        GrpcMain.run(current_server.getGrpcPort());
-        RestMain.run(current_server.getRestAddress());
         logger.log(Level.SEVERE, "Hello start!");
+        zk.connectToMailbox();
+        System.out.println("Loggging msh sh3'al");
+        logger.log(Level.SEVERE, "SEVER SHA3'al");
+        logger.log(Level.CONFIG, "CONFIG SHA3'al");
+//        GrpcMain.run(current_server.getGrpcPort());
+        GrpcMain.run("8000");
+//        RestMain.run(current_server.getRestAddress());
+        RestMain.run("8080");
         return true;
     }
 
@@ -176,9 +185,10 @@ public class ServerManager {
         synchronized (this.rides) {
             Ride existing_ride = this.rides.stream().filter(ride::equals).findAny().orElse(null);
             if (existing_ride == null) {
+//                ride.setId(zk.generateUniqueId());
                 rides.add(ride);
-
-                return ride;
+                return this.rides.stream().filter(ride::equals).findAny().orElse(null);
+//                return ride;
             }
 
             return existing_ride;
@@ -193,7 +203,7 @@ public class ServerManager {
 
     private boolean isLeaderForRide(Ride ride) {
         assert ride != null;
-        return primary_shards.contains(ride.getStartPosition().getShard());
+        return system_shards.get(ride.getStartPosition().getShard()).getName().equals(getServer().getName());
     }
 
     public synchronized List<Ride> getRides() {
@@ -226,6 +236,7 @@ public class ServerManager {
     public synchronized void updateShardLeader(String shard, Server server) {
         logger.log(Level.FINEST, "new shard leader" + shard + " server=" + server.getName());
         system_shards.put(shard, server);
+
     }
 
     public void updateAliveServers(List<String> alive) {

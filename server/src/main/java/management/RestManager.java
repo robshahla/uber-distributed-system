@@ -12,7 +12,15 @@ import java.util.logging.Logger;
 
 public class RestManager {
 
-    private final static Logger logger = Logger.getLogger(RestManager.class.getName());
+    //    private final static Logger logger = Logger.getLogger(RestManager.class.getName());
+//
+//    static {
+//        logger.setParent(MessagesManager.ROOT_LOGGER);
+//        logger.setLevel(MessagesManager.LOG_LEVEL);
+//        logger.setUseParentHandlers(true);
+//
+//    }
+    private static MessagesManager logger = MessagesManager.instance;
 
     /**
      * Called from the RESET server
@@ -25,11 +33,13 @@ public class RestManager {
         Server leader_server = sm.getLeader(ride.getStartPosition().getName());
         if (sm.getServer().getName().equals(leader_server.getName())) {
             Ride new_ride = sm.addRideBroadCast(ride);
-            return new_ride.serialize(); // think how to return to client... serialize for now
+            return new_ride.toString(); // think how to return to client... serialize for now
         }
         sscClient grpc_client = new sscClient(leader_server.getGrpcAddress());
+        System.out.println("connecting to server: " + leader_server.getGrpcAddress() + leader_server.getName()); //remove
+        logger.log(Level.WARNING, "Got this after connecting");
         // @TODO: add retry for a couple of times in case the leader failed while broadcasting - we want to send this to the new leader
-        return grpc_client.addRideLeader(ride).serialize();
+        return grpc_client.addRideLeader(ride).toString();
     }
 
     /**
@@ -41,8 +51,8 @@ public class RestManager {
         Map<String, Server> system_shards = sm.getSystemShards();
         final int shards_n = system_shards.size();
         CountDownLatch latch = new CountDownLatch(shards_n);
-        logger.log(Level.FINE, "Snapshot request, getting rides from shards leaders, shards_n = " + shards_n);
-        logger.log(Level.FINE, "Calling server: " + this_server_name);
+        logger.log(Level.INFO, "Snapshot request, getting rides from shards leaders, shards_n = " + shards_n);
+        logger.log(Level.INFO, "Calling server: " + this_server_name);
         List<Ride> all_rides = new ArrayList<>();
         Set<Server> servers_to_add = new HashSet<>(system_shards.values());
 
@@ -52,6 +62,7 @@ public class RestManager {
             if (current_server_name.equals(this_server_name)) {
                 logger.log(Level.FINE, "Getting rides from the calling server: " + server.getName());
                 synchronized (all_rides) {
+                    logger.log(Level.FINE, "MNYKE + " + sm.getRides().size());
                     all_rides.addAll(sm.getRides());
                     latch.countDown();
                 }

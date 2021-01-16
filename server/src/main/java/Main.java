@@ -13,22 +13,17 @@ public class Main {
 
     static {
         logger.setParent(MessagesManager.ROOT_LOGGER);
-    }
-
-    public static void main(String[] args) {
-
-        final var ref = new Object() {
-            int i = 1;
-        };
-
+        logger.setLevel(MessagesManager.LOG_LEVEL);
         LogManager.getLogManager().getLogger(MessagesManager.ROOT_LOG_NAME).setLevel(MessagesManager.LOG_LEVEL);
         Arrays.stream(Logger.getLogger("").getHandlers()).forEach(
                 logger -> {
-                    System.out.println("Hello " + ref.i);
+
                     logger.setLevel(MessagesManager.LOG_LEVEL);
-                    ref.i = ref.i + 1;
                 }
         );
+    }
+
+    public static void main(String[] args) {
 
         ServerManager sm = ServerManager.getInstance();
         String filePath = args[0]; // config file path
@@ -39,6 +34,7 @@ public class Main {
             return;
         }
         sm.start();
+        logger.log(Level.INFO, "happened after start");
     }
 
 }

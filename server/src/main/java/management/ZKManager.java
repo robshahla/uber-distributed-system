@@ -27,6 +27,11 @@ public class ZKManager {
     private final String host_addr;
     private boolean isConnected = false;
 
+
+    static {
+        logger.setParent(MessagesManager.ROOT_LOGGER);
+    }
+
     public ZKManager(String address) {
         host_addr = address;
         zooKeeper = null;

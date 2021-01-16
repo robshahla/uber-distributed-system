@@ -1,7 +1,9 @@
+import management.MessagesManager;
 import management.ServerManager;
 
 import java.util.Arrays;
 import java.util.logging.Level;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 
@@ -9,12 +11,23 @@ public class Main {
 
     private static final Logger logger = Logger.getLogger(Main.class.getName());
 
+    static {
+        logger.setParent(MessagesManager.ROOT_LOGGER);
+    }
+
     public static void main(String[] args) {
 
-        Level level = Level.FINE;
-        Logger.getLogger("").setLevel(level);
+        final var ref = new Object() {
+            int i = 1;
+        };
+
+        LogManager.getLogManager().getLogger(MessagesManager.ROOT_LOG_NAME).setLevel(MessagesManager.LOG_LEVEL);
         Arrays.stream(Logger.getLogger("").getHandlers()).forEach(
-                logger -> logger.setLevel(level)
+                logger -> {
+                    System.out.println("Hello " + ref.i);
+                    logger.setLevel(MessagesManager.LOG_LEVEL);
+                    ref.i = ref.i + 1;
+                }
         );
 
         ServerManager sm = ServerManager.getInstance();

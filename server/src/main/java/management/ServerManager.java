@@ -45,11 +45,16 @@ public class ServerManager {
      */
     private final ArrayList<Ride> rides;
     public ZKManager zk;
-    private Logger logger;
+    private static final Logger logger = Logger.getLogger(ServerManager.class.getName());
     /**
      * This server name.
      */
     private Server current_server;
+
+
+    static {
+        logger.setParent(MessagesManager.ROOT_LOGGER);
+    }
 
     private ServerManager() {
         cities = new HashSet<>();
@@ -62,7 +67,6 @@ public class ServerManager {
     public static ServerManager getInstance() {
         if (instance == null) {
             instance = new ServerManager();
-            instance.logger = Logger.getLogger(ServerManager.class.getName());
         }
         return instance;
     }
@@ -118,12 +122,13 @@ public class ServerManager {
     }
 
     public boolean start() {
-        ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-        rootLogger.setLevel(ch.qos.logback.classic.Level.ERROR);
+//        ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+//        rootLogger.setLevel(ch.qos.logback.classic.Level.ALL);
         if (!zk.connect()) return false;
 
         GrpcMain.run(current_server.getGrpcPort());
         RestMain.run(current_server.getRestAddress());
+        logger.log(Level.SEVERE, "Hello start!");
         return true;
     }
 
@@ -172,6 +177,7 @@ public class ServerManager {
             Ride existing_ride = this.rides.stream().filter(ride::equals).findAny().orElse(null);
             if (existing_ride == null) {
                 rides.add(ride);
+
                 return ride;
             }
 

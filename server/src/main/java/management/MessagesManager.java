@@ -7,8 +7,14 @@ import com.google.gson.JsonPrimitive;
 import entities.Ride;
 
 import java.nio.charset.StandardCharsets;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class MessagesManager {
+    public static final String ROOT_LOG_NAME = "ds-hw2";
+    public static final Level LOG_LEVEL = Level.FINER;
+    public static final Logger ROOT_LOGGER = Logger.getLogger(ROOT_LOG_NAME);
+
     private static final String OPERATION = "operation";
     private static final String DATA = "data";
 
@@ -28,7 +34,7 @@ public class MessagesManager {
     }
 
     public static class MessageFactory {
-        
+
         public static String newRideBroadCastMessage(Ride new_ride) {
             JsonObject json_message = new JsonObject();
             json_message.add(OPERATION, new JsonPrimitive(OPERATION_NEW_RIDE));

@@ -28,8 +28,8 @@ public class RestManager {
             return new_ride.serialize(); // think how to return to client... serialize for now
         }
         sscClient grpc_client = new sscClient(leader_server.getGrpcAddress());
-        grpc_client.addRideLeader(ride); // @TODO: add retry for a couple of times in case the leader failed while broadcasting - we want to send this to the new leader
-        return ride.serialize();
+        // @TODO: add retry for a couple of times in case the leader failed while broadcasting - we want to send this to the new leader
+        return grpc_client.addRideLeader(ride).serialize();
     }
 
     /**

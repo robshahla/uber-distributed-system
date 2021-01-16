@@ -31,7 +31,7 @@ public class Ride implements Serializable {
         this.vacancies = vacancies;
         this.pd = pd;
         this.id = -1;
-
+        this.reservations = new ArrayList<>();
     }
 
     public Ride(ride request) {
@@ -43,6 +43,7 @@ public class Ride implements Serializable {
         this.departure_time = request.getDepartureTime();
         this.vacancies = request.getVacancies();
         this.pd = request.getPd();
+        this.reservations = new ArrayList<>();
     }
 
 

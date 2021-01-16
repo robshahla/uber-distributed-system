@@ -1,0 +1,50 @@
+{
+  "zk-address": "172.18.0.2:2181",
+  "cities": [
+    {
+      "city-name": "A",
+      "X": "0",
+      "Y": "0",
+      "shard": "shard-1"
+    },
+    {
+      "city-name": "B",
+      "X": "3",
+      "Y": "0",
+      "shard": "shard-1"
+    },
+    {
+      "city-name": "C",
+      "X": "2",
+      "Y": "1",
+      "shard": "shard-2"
+    }
+  ],
+  "servers": [
+    {
+      "server-name": "server-1",
+      "rest-address": "172.18.1.5:8080",
+      "grpc-address": "172.18.1.5:8000",
+      "shards": [
+        "shard-1"
+      ]
+    },
+    {
+      "server-name": "server-2",
+      "rest-address": "172.18.1.6:8080",
+      "grpc-address": "172.18.1.6:8000",
+      "shards": [
+        "shard-1",
+        "shard-2"
+      ]
+    },
+    {
+      "server-name": "server-3",
+      "rest-address": "172.18.1.7:8080",
+      "grpc-address": "172.18.1.7:8000",
+      "shards": [
+        "shard-2"
+      ]
+    }
+  ]
+}

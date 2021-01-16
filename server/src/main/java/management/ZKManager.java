@@ -89,7 +89,7 @@ public class ZKManager {
             created_id = zooKeeper.create(Paths.get(path, "id-").toString(), null,
                     ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
             zooKeeper.delete(created_id, -1);
-            return Integer.parseInt(created_id);
+            return getSequentialNumber(created_id);
         } catch (KeeperException | InterruptedException e) {
             System.out.println("ZooKeeper: Error generating unique id"); //should not get here
         }

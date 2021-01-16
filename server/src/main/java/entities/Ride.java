@@ -35,15 +35,14 @@ public class Ride implements Serializable {
     }
 
     public Ride(ride request) {
-        this.first_name = request.getFirstName();
-        this.last_name = request.getLastName();
-        this.phone = request.getPhone();
-        this.start_position = request.getStartPosition();
-        this.end_position = request.getEndPosition();
-        this.departure_time = request.getDepartureTime();
-        this.vacancies = request.getVacancies();
-        this.pd = request.getPd();
-        this.reservations = new ArrayList<>();
+        this(request.getFirstName(),
+                request.getFirstName(),
+                request.getPhone(),
+                request.getStartPosition(),
+                request.getEndPosition(),
+                request.getDepartureTime(),
+                request.getVacancies(),
+                request.getPd());
     }
 
 

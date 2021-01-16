@@ -5,14 +5,11 @@ import com.google.gson.JsonParser;
 import entities.Reservation;
 import entities.Ride;
 import generated.*;
-import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -20,7 +17,7 @@ import java.util.logging.Logger;
 
 public class sscClient {
     private static final Logger logger = Logger.getLogger(sscClient.class.getName());
-
+    private static final emptyMessage EMPTY_MESSAGE = emptyMessage.newBuilder().build();
     private final sscGrpc.sscBlockingStub blockingStub;
     private final sscGrpc.sscStub asyncStub;
 
@@ -85,12 +82,13 @@ public class sscClient {
                 .build();
     }
 
-    public void getRides(ArrayList<String> append_list, CountDownLatch latch) {
-        asyncStub.getRides(emptyMessage.newBuilder().build(), new StreamObserver<response>() {
+    public void getRidesAsync(List<Ride> append_list, CountDownLatch latch) {
+        asyncStub.getRidesAsync(EMPTY_MESSAGE, new StreamObserver<response>() {
             @Override
             public void onNext(response value) {
                 synchronized (append_list) {
-                    append_list.add(value.getMsg());
+                    JsonObject jsonObject = JsonParser.parseString(value.getMsg()).getAsJsonObject();
+                    append_list.add(Ride.deserialize(jsonObject));
                 }
             }
 

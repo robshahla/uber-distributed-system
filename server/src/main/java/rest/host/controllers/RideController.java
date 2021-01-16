@@ -25,6 +25,6 @@ public class RideController {
 
     @GetMapping("/snapshot")
     String getSnapshot() {
-        return ServerManager.getInstance().getSnapshot();
+        return RestManager.getSnapshot();
     }
 }

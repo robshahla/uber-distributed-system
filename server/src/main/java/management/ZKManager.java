@@ -42,9 +42,6 @@ public class ZKManager {
             if (!isConnected) {
                 return false;
             }
-            for (var str : System.getenv().entrySet()) {
-                System.out.println(str);
-            }
             ServerManager sm = ServerManager.getInstance();
             Path active_node = Paths.get(ZKPaths.ACTIVE, sm.getServer().getName());
             zooKeeper.addWatch(ZKPaths.ACTIVE, active_watch, AddWatchMode.PERSISTENT);

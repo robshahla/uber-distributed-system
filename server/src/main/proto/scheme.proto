@@ -8,7 +8,7 @@ package ssc;
 
 service  ssc{
   rpc upsert(ride)  returns (response) {}
-  rpc getRides(emptyMessage) returns (response) {}
+  rpc getRidesAsync(emptyMessage) returns (stream response) {}
   rpc addRideLeader(ride) returns (response) {}
   rpc addRideFollower(ride) returns (response) {}
   rpc reserveRideLeader(reservation) returns (ride) {}

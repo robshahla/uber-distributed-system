@@ -4,17 +4,7 @@ import entities.Reservation;
 import entities.Ride;
 import generated.*;
 import io.grpc.stub.StreamObserver;
-import management.RestManager;
 import management.ServerManager;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import static java.lang.Integer.max;
-import static java.lang.Integer.min;
 
 public class sscService extends sscGrpc.sscImplBase {
 
@@ -32,6 +22,15 @@ public class sscService extends sscGrpc.sscImplBase {
     }
 
     @Override
+    public void getRidesAsync(emptyMessage request, StreamObserver<response> responseObserver) {
+        ServerManager.getInstance().getRides().stream().map(ride ->
+                response.newBuilder().setMsg(ride.serialize()).build())
+                .forEach(responseObserver::onNext);
+        responseObserver.onCompleted();
+
+    }
+
+    //    @Override
     public void getRides(generated.emptyMessage request, StreamObserver<generated.response> responseObserver) {
         ServerManager.getInstance().getRides().stream().filter((element) -> {
             ServerManager sm = ServerManager.getInstance();

@@ -5,7 +5,6 @@ import entities.Reservation;
 import entities.Ride;
 import entities.Server;
 import grpc.GrpcMain;
-import grpc.sscClient;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -16,7 +15,6 @@ import rest.host.RestMain;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -38,22 +36,22 @@ public class ServerManager {
     /**
      * Saves All cities in the system.
      */
-    private Set<City> cities;
+    private final Set<City> cities;
     /**
      * Maps shard name to its server leader name
      */
-    private Map<String, Server> system_shards;
+    private final Map<String, Server> system_shards;
 
     /**
      * Contains all servers in the system (dead and alive!)
      */
-    private Map<String, Server> system_servers;
+    private final Map<String, Server> system_servers;
 
 
     /**
      * Represents the name of the shards that this server is leader for.
      */
-    private ArrayList<String> primary_shards;
+    private final ArrayList<String> primary_shards;
 
     /**
      * Represents all the rides from cities which this leader is responsible for (@field shards)
@@ -90,6 +88,7 @@ public class ServerManager {
             return false;
         }
         String zk_addr = (String) json_data.get("zk-address");
+        logger.log(Level.CONFIG, "zk-address = " + zk_addr);
         zk = new ZKManager(zk_addr);
 
         // initializing cities array
@@ -131,8 +130,8 @@ public class ServerManager {
         ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
         rootLogger.setLevel(ch.qos.logback.classic.Level.ERROR);
         if (!zk.connect()) return false;
-        GrpcMain.run("8000");
-        RestMain.run("8080");
+        GrpcMain.run(current_server.getGrpcPort());
+        RestMain.run(current_server.getRestAddress());
         return true;
     }
 
@@ -191,30 +190,16 @@ public class ServerManager {
     public Ride addReservation(Reservation reservation) {
 
         // TODO: check if there is a suitable ride, if so reserve it and return ride, otherwise return "No ride was found"
-        return null;
+        return reservation != null ? null : null;
     }
 
-    public String getSnapshot() {
-        CountDownLatch latch = new CountDownLatch(system_shards.size());
-        ArrayList<String> rides = new ArrayList<>();
-        for (Server server : system_shards.values()) {
-            sscClient grpc_client = new sscClient(server.getGrpcAddress());
-            grpc_client.getRides(rides, latch);
-        }
-        try {
-            latch.await();
-        } catch (InterruptedException e) {
-            logger.log(Level.SEVERE, "Error getting snapshot");
-            e.printStackTrace();
-            return "";
-        }
-        StringBuilder stringBuilder = new StringBuilder();
-        rides.forEach(stringBuilder::append);
-        return stringBuilder.toString();
+    private boolean isLeaderForRide(Ride ride) {
+        assert ride != null;
+        return primary_shards.contains(ride.getStartPosition().getShard());
     }
 
-    public ArrayList<Ride> getRides() {
-        return rides;
+    public synchronized List<Ride> getRides() {
+        return rides.stream().filter(this::isLeaderForRide).collect(Collectors.toList());
     }
 
 
@@ -241,7 +226,7 @@ public class ServerManager {
 
 
     public synchronized void updateShardLeader(String shard, Server server) {
-        logger.log(Level.INFO, "new shard leader" + shard + " server=" + server.getName());
+        logger.log(Level.FINEST, "new shard leader" + shard + " server=" + server.getName());
         system_shards.put(shard, server);
     }
 
@@ -256,7 +241,7 @@ public class ServerManager {
 
     private Map<String, Object> getJsonMap(String file_path) {
         JSONParser jsonParser = new JSONParser();
-        Map<String, Object> json_data = new HashMap<String, Object>();
+        Map<String, Object> json_data = new HashMap<>();
         try (FileReader reader = new FileReader(file_path)) {
             JSONObject main_object = (JSONObject) jsonParser.parse(reader);
             @SuppressWarnings("unchecked")

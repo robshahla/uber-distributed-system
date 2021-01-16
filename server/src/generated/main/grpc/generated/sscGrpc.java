@@ -59,34 +59,34 @@ public final class sscGrpc {
   }
 
   private static volatile io.grpc.MethodDescriptor<generated.emptyMessage,
-      generated.response> getGetRidesMethod;
+      generated.response> getGetRidesAsyncMethod;
 
   @io.grpc.stub.annotations.RpcMethod(
-      fullMethodName = SERVICE_NAME + '/' + "getRides",
+      fullMethodName = SERVICE_NAME + '/' + "getRidesAsync",
       requestType = generated.emptyMessage.class,
       responseType = generated.response.class,
-      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+      methodType = io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING)
   public static io.grpc.MethodDescriptor<generated.emptyMessage,
-      generated.response> getGetRidesMethod() {
-    io.grpc.MethodDescriptor<generated.emptyMessage, generated.response> getGetRidesMethod;
-    if ((getGetRidesMethod = sscGrpc.getGetRidesMethod) == null) {
+      generated.response> getGetRidesAsyncMethod() {
+    io.grpc.MethodDescriptor<generated.emptyMessage, generated.response> getGetRidesAsyncMethod;
+    if ((getGetRidesAsyncMethod = sscGrpc.getGetRidesAsyncMethod) == null) {
       synchronized (sscGrpc.class) {
-        if ((getGetRidesMethod = sscGrpc.getGetRidesMethod) == null) {
-          sscGrpc.getGetRidesMethod = getGetRidesMethod =
+        if ((getGetRidesAsyncMethod = sscGrpc.getGetRidesAsyncMethod) == null) {
+          sscGrpc.getGetRidesAsyncMethod = getGetRidesAsyncMethod =
               io.grpc.MethodDescriptor.<generated.emptyMessage, generated.response>newBuilder()
-              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
-              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "getRides"))
+              .setType(io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "getRidesAsync"))
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   generated.emptyMessage.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   generated.response.getDefaultInstance()))
-              .setSchemaDescriptor(new sscMethodDescriptorSupplier("getRides"))
+              .setSchemaDescriptor(new sscMethodDescriptorSupplier("getRidesAsync"))
               .build();
         }
       }
     }
-    return getGetRidesMethod;
+    return getGetRidesAsyncMethod;
   }
 
   private static volatile io.grpc.MethodDescriptor<generated.ride,
@@ -239,9 +239,9 @@ public final class sscGrpc {
 
     /**
      */
-    public void getRides(generated.emptyMessage request,
+    public void getRidesAsync(generated.emptyMessage request,
         io.grpc.stub.StreamObserver<generated.response> responseObserver) {
-      asyncUnimplementedUnaryCall(getGetRidesMethod(), responseObserver);
+      asyncUnimplementedUnaryCall(getGetRidesAsyncMethod(), responseObserver);
     }
 
     /**
@@ -275,12 +275,12 @@ public final class sscGrpc {
                 generated.response>(
                   this, METHODID_UPSERT)))
           .addMethod(
-            getGetRidesMethod(),
-            asyncUnaryCall(
+            getGetRidesAsyncMethod(),
+            asyncServerStreamingCall(
               new MethodHandlers<
                 generated.emptyMessage,
                 generated.response>(
-                  this, METHODID_GET_RIDES)))
+                  this, METHODID_GET_RIDES_ASYNC)))
           .addMethod(
             getAddRideLeaderMethod(),
             asyncUnaryCall(
@@ -330,10 +330,10 @@ public final class sscGrpc {
 
     /**
      */
-    public void getRides(generated.emptyMessage request,
+    public void getRidesAsync(generated.emptyMessage request,
         io.grpc.stub.StreamObserver<generated.response> responseObserver) {
-      asyncUnaryCall(
-          getChannel().newCall(getGetRidesMethod(), getCallOptions()), request, responseObserver);
+      asyncServerStreamingCall(
+          getChannel().newCall(getGetRidesAsyncMethod(), getCallOptions()), request, responseObserver);
     }
 
     /**
@@ -384,9 +384,10 @@ public final class sscGrpc {
 
     /**
      */
-    public generated.response getRides(generated.emptyMessage request) {
-      return blockingUnaryCall(
-          getChannel(), getGetRidesMethod(), getCallOptions(), request);
+    public java.util.Iterator<generated.response> getRidesAsync(
+        generated.emptyMessage request) {
+      return blockingServerStreamingCall(
+          getChannel(), getGetRidesAsyncMethod(), getCallOptions(), request);
     }
 
     /**
@@ -435,14 +436,6 @@ public final class sscGrpc {
 
     /**
      */
-    public com.google.common.util.concurrent.ListenableFuture<generated.response> getRides(
-        generated.emptyMessage request) {
-      return futureUnaryCall(
-          getChannel().newCall(getGetRidesMethod(), getCallOptions()), request);
-    }
-
-    /**
-     */
     public com.google.common.util.concurrent.ListenableFuture<generated.response> addRideLeader(
         generated.ride request) {
       return futureUnaryCall(
@@ -467,7 +460,7 @@ public final class sscGrpc {
   }
 
   private static final int METHODID_UPSERT = 0;
-  private static final int METHODID_GET_RIDES = 1;
+  private static final int METHODID_GET_RIDES_ASYNC = 1;
   private static final int METHODID_ADD_RIDE_LEADER = 2;
   private static final int METHODID_ADD_RIDE_FOLLOWER = 3;
   private static final int METHODID_RESERVE_RIDE_LEADER = 4;
@@ -493,8 +486,8 @@ public final class sscGrpc {
           serviceImpl.upsert((generated.ride) request,
               (io.grpc.stub.StreamObserver<generated.response>) responseObserver);
           break;
-        case METHODID_GET_RIDES:
-          serviceImpl.getRides((generated.emptyMessage) request,
+        case METHODID_GET_RIDES_ASYNC:
+          serviceImpl.getRidesAsync((generated.emptyMessage) request,
               (io.grpc.stub.StreamObserver<generated.response>) responseObserver);
           break;
         case METHODID_ADD_RIDE_LEADER:
@@ -571,7 +564,7 @@ public final class sscGrpc {
           serviceDescriptor = result = io.grpc.ServiceDescriptor.newBuilder(SERVICE_NAME)
               .setSchemaDescriptor(new sscFileDescriptorSupplier())
               .addMethod(getUpsertMethod())
-              .addMethod(getGetRidesMethod())
+              .addMethod(getGetRidesAsyncMethod())
               .addMethod(getAddRideLeaderMethod())
               .addMethod(getAddRideFollowerMethod())
               .addMethod(getReserveRideLeaderMethod())

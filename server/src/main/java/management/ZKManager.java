@@ -14,6 +14,8 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Logger;
 
+import static management.MessagesManager.ProcessMessage;
+
 
 public class ZKManager {
     private final CountDownLatch connectedSignal = new CountDownLatch(1);
@@ -46,6 +48,10 @@ public class ZKManager {
             ServerManager sm = ServerManager.getInstance();
             Path active_node = Paths.get(ZKPaths.ACTIVE, sm.getServer().getName());
             zooKeeper.addWatch(ZKPaths.ACTIVE, active_watch, AddWatchMode.PERSISTENT);
+            try {
+                zooKeeper.delete(active_node.toString(), -1);
+            } catch (KeeperException.NoNodeException ignored) {
+            }
             zooKeeper.create(active_node.toString(), null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 
             for (String shard : sm.getSystemShards().keySet()) {
@@ -78,9 +84,9 @@ public class ZKManager {
 
     public int generateUniqueId() {
         String path = ZKPaths.COUNTER;
-        String created_id = null;
+        String created_id;
         try {
-            created_id = zooKeeper.create(Paths.get(path, "").toString(), null,
+            created_id = zooKeeper.create(Paths.get(path, "id-").toString(), null,
                     ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
             zooKeeper.delete(created_id, -1);
             return Integer.parseInt(created_id);
@@ -141,7 +147,8 @@ public class ZKManager {
                 Stat child_data_stat = new Stat();
                 try {
                     byte[] message_data_bytes = zooKeeper.getData(child_path, false, child_data_stat);
-                    ServerManager.MessageFactory.ProcessMessage(message_data_bytes);
+                    ProcessMessage(message_data_bytes);
+                    zooKeeper.delete(child_path, -1);
                 } catch (KeeperException | InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -178,10 +185,9 @@ public class ZKManager {
     }
 
     private static class ZKPaths {
-        public static final String ROOT = "/";
+        public static final String ROOT = "/Uber";
         public static final String ELECTIONS = Paths.get(ROOT, "elections").toString();
         public static final String ACTIVE = Paths.get(ROOT, "active").toString();
-        public static final String CITIES = Paths.get(ROOT, "cities").toString();
         public static final String MESSAGES = Paths.get(ROOT, "mailbox").toString();
         public static final String COUNTER = Paths.get(ROOT, "id-generator").toString();
     }
@@ -189,6 +195,6 @@ public class ZKManager {
 
     private int getSequentialNumber(String node_name) {
         assert node_name.contains("-");
-        return Integer.parseInt(node_name.substring(node_name.lastIndexOf("-" + 1)));
+        return Integer.parseInt(node_name.substring(node_name.lastIndexOf("-") + 1));
     }
 }

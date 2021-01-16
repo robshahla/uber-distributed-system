@@ -31,6 +31,7 @@ public class Ride implements Serializable {
         this.vacancies = vacancies;
         this.pd = pd;
         this.id = -1;
+
     }
 
     public Ride(ride request) {

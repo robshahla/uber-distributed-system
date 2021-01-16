@@ -1,9 +1,5 @@
 package management;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonPrimitive;
 import entities.City;
 import entities.Reservation;
 import entities.Ride;
@@ -19,7 +15,6 @@ import rest.host.RestMain;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
@@ -170,7 +165,7 @@ public class ServerManager {
             result_ride.setId(zk.generateUniqueId());
         }
         Set<Server> followers = ServerManager.getInstance().getCityFollowers(result_ride.getStartPosition());
-        zk.atomicBroadCastMessage(followers, MessageFactory.newRideBroadCastMessage(result_ride));
+        zk.atomicBroadCastMessage(followers, MessagesManager.MessageFactory.newRideBroadCastMessage(result_ride));
         return result_ride; // response to the user.
     }
 
@@ -188,6 +183,7 @@ public class ServerManager {
                 rides.add(ride);
                 return ride;
             }
+
             return existing_ride;
         }
     }
@@ -276,32 +272,4 @@ public class ServerManager {
         return json_data;
     }
 
-
-    public static class MessageFactory {
-        public static final String OPERATION = "operation";
-        public static final String DATA = "data";
-
-        public static final String OPERATION_NEW_RIDE = "new-ride";
-
-        private static String newRideBroadCastMessage(Ride new_ride) {
-            JsonObject json_message = new JsonObject();
-            json_message.add(OPERATION, new JsonPrimitive(OPERATION_NEW_RIDE));
-            json_message.add(DATA, JsonParser.parseString(new_ride.serialize()));
-            return json_message.toString();
-        }
-
-        public static void ProcessMessage(byte[] message) {
-            String data_string = new String(message, StandardCharsets.UTF_8);
-            JsonObject json_message = JsonParser.parseString(data_string).getAsJsonObject();
-            JsonElement operation = json_message.get(OPERATION);
-            if (operation != null) {
-                if (operation.getAsString().equals(OPERATION_NEW_RIDE)) {
-                    JsonObject ride_as_json = json_message.get(DATA).getAsJsonObject();
-                    Ride ride_to_add = Ride.deserialize(ride_as_json);
-                    ServerManager.getInstance().addRide(ride_to_add);
-                }
-            }
-        }
-
-    }
 }

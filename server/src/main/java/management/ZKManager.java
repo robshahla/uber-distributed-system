@@ -80,10 +80,10 @@ public class ZKManager {
         String path = ZKPaths.COUNTER;
         String created_id = null;
         try {
-            created_id = zooKeeper.create(Paths.get(path, "").toString(), null,
+            created_id = zooKeeper.create(Paths.get(path, "id-").toString(), null,
                     ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
             zooKeeper.delete(created_id, -1);
-            return Integer.parseInt(created_id);
+            return getSequentialNumber(created_id);
         } catch (KeeperException | InterruptedException e) {
             System.out.println("ZooKeeper: Error generating unique id"); //should not get here
         }
@@ -181,7 +181,6 @@ public class ZKManager {
         public static final String ROOT = "/";
         public static final String ELECTIONS = Paths.get(ROOT, "elections").toString();
         public static final String ACTIVE = Paths.get(ROOT, "active").toString();
-        public static final String CITIES = Paths.get(ROOT, "cities").toString();
         public static final String MESSAGES = Paths.get(ROOT, "mailbox").toString();
         public static final String COUNTER = Paths.get(ROOT, "id-generator").toString();
     }
@@ -189,6 +188,6 @@ public class ZKManager {
 
     private int getSequentialNumber(String node_name) {
         assert node_name.contains("-");
-        return Integer.parseInt(node_name.substring(node_name.lastIndexOf("-" + 1)));
+        return Integer.parseInt(node_name.substring(node_name.lastIndexOf("-") + 1));
     }
 }

@@ -1,5 +1,7 @@
-from kazoo.client import KazooClient
+import argparse
 import os
+
+from kazoo.client import KazooClient
 
 
 def zkConnect(hosts) -> KazooClient:
@@ -38,17 +40,22 @@ def zkClean(zookeeper: KazooClient, root):
 
 
 if __name__ == "__main__":
-    import sys
 
-    ROOT = "/"
+    parser = argparse.ArgumentParser(description="Cleans & build zookeeper")
+    parser.add_argument('--host', type=str, help="host address to connect to (for example --host localhost:2181")
+    parser.add_argument('--shards', nargs="+", default=[], help="shards list (for example --shards shard-1 shard-2")
+    args = parser.parse_args()
+    shards_list = args.shards
+    host = args.host
+    ROOT = "/Uber"
     ELECTIONS = os.path.join(ROOT, "elections")
     ACTIVE = os.path.join(ROOT, "active")
     MESSAGES = os.path.join(ROOT, "mailbox")
     COUNTER = os.path.join(ROOT, "id-generator")
-    shards = ['shard-1', 'shard-2']
+
     PATHS = [ROOT, ELECTIONS, ACTIVE, MESSAGES, COUNTER]
-    for shard in shards:
+    for shard in shards_list:
         PATHS.append(os.path.join(ELECTIONS, shard))
-    zk = zkConnect(sys.argv[1])
-    # zkClean(zk, root="/")
+    zk = zkConnect(args.host)
+    zkClean(zk, root="/")
     cleanBuild(zookeeper=zk, paths=PATHS, root=ROOT)

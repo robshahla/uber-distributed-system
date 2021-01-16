@@ -1,5 +1,5 @@
 import management.ServerManager;
-import org.apache.zookeeper.*;
+import org.apache.zookeeper.ZooKeeper;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
@@ -13,6 +13,7 @@ public class Main {
     private static final Logger logger = Logger.getLogger(Main.class.getName());
 
     public static void main(String[] args) throws InterruptedException {
+
         ServerManager sm = ServerManager.getInstance();
         String filePath = args[0]; // config file path
         String server_name = args[1];

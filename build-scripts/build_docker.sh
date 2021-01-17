@@ -40,3 +40,7 @@ docker run --network uber-network --ip 172.18.0.4 --link some-zookeeper:cleaner 
 #sleep 2
 #docker ps
 # docker run -it --rm --network uber-network --ip 172.18.0.7 --link some-zookeeper:zookeeper zookeeper zkCli.sh -server zookeeper
+
+#docker run --network uber-network --ip 172.18.0.4 -it ubuntu bash
+
+#docker run -it --rm --network uber-network --ip 172.18.0.7 --link some-zookeeper:zookeeper zookeeper zkCli.sh -server zookeeper

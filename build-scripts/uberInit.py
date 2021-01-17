@@ -76,26 +76,42 @@ def run_cleaner(container_name: str, generator, zookeeper_container_name: str, z
     os.system(" ".join(command))
 
 
-def run_servers(generator, zookeeper_container_name: str, servers_number: int):
-    base_name = NetworkConfig().server_base_name
+def run_servers(servers_config: list, zookeeper_container_name: str, servers_number: int):
     docker_image_name = 'server:v1'
     os.system(f'cd ./servers/ && docker image build --no-cache -t {docker_image_name} .')
-    for number in range(1, servers_number+1):
-        server_name = base_name + '-' + str(number)
+
+    # remove existing containers
+    for server in servers_config:
+        server_name = server[0]
         os.system(f'docker rm -f {server_name}')
-        time.sleep(2)
+
+    time.sleep(2)
+
+    # create the containers
+    for server in servers_config:
+        server_name = server[0]
+        server_ip = server[1]
         command = [
             'docker', 'run ',
             '--network', NetworkConfig().subnet_name,
-            '--ip', next(generator),
+            '--ip', server_ip,
             '--link', zookeeper_container_name + ':' + server_name,
             '-d',
             '--name', server_name,
             '-t', f'\"{docker_image_name}\"',
             './config.json', server_name
         ]
-        # subprocess.run(" ".join(command))
         os.system(" ".join(command))
+
+
+def insertShardForCity(cities):
+
+    # for city in cities:
+    return [], []
+
+
+def getShardsPartition(shards, servers_number):
+    return []
 
 
 def main():
@@ -117,8 +133,19 @@ def main():
     zookeeper_connection = ':'.join([zookeeper_address, network_config.zookeeper_port])
     run_cleaner(cleaner_container_name,  generator, zookeeper_container_name, zookeeper_connection, shards)
 
+    # building tuples of (server_name, server_ip_address, responsible_shards)
+    # cities_info, shards = insertShardForCity(cities)
+    # responsibility_shards = getShardsPartition(shards, servers_number)
+    responsibility_shards = [0, 0, 0]
+    base_server_name = NetworkConfig().server_base_name
+    servers_config = [(base_server_name + '-' + str(number + 1), next(generator), responsibility_shards[number]) for number in range(servers_number)]
+
+    # creating config.json file
+    # create_config_file(zookeeper_connection, cities_info, servers_config)
+
+
     # running servers
-    run_servers(generator, zookeeper_container_name, servers_number)
+    run_servers(servers_config, zookeeper_container_name, servers_number)
     print(next(generator))
     print(next(generator))
 

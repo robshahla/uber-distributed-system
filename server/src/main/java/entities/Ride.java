@@ -149,10 +149,23 @@ public class Ride implements Serializable {
 
     @Override
     public String toString() {
-        return "Ride Id: " + id + "\n" +
-                "First Name: " + first_name + "\n" +
-                "Last Name: " + last_name + "\n" +
-                "Phone Number: " + phone + "\n";
+        StringBuilder ride_to_str = new StringBuilder();
+        final String new_line = "\n\t";
+        ride_to_str.append("Ride (id:").append(id).append("):")
+                .append(new_line).append("First Name: ").append(first_name)
+                .append(new_line).append("Last Name: ").append(last_name)
+                .append(new_line).append("Phone: ").append(phone)
+                .append(new_line).append("Ride From ").append(start_position).append(" to ").append(end_position)
+                .append(new_line).append("Departure time: ").append(departure_time)
+                .append(new_line).append("Available places: ").append(vacancies - reservations.size())
+                .append(new_line).append("Permitted Deviation: ").append(pd)
+                .append(new_line).append("Reserved by (").append(reservations.size()).append(" total):");
+        for (String reservant : reservations) {
+            ride_to_str.append(new_line).append("\t").append(reservant);
+        }
+        ride_to_str.append("\n");
+
+        return ride_to_str.toString();
     }
 
 

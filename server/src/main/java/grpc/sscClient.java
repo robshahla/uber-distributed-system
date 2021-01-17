@@ -20,13 +20,18 @@ public class sscClient {
     private static final emptyMessage EMPTY_MESSAGE = emptyMessage.newBuilder().build();
     private final sscGrpc.sscBlockingStub blockingStub;
     private final sscGrpc.sscStub asyncStub;
-
+    private ManagedChannel channel;
     public sscClient(String address) {
-        ManagedChannel channel = ManagedChannelBuilder.forTarget(address).usePlaintext().build();
+        channel = ManagedChannelBuilder.forTarget(address).usePlaintext().build();
         blockingStub = sscGrpc.newBlockingStub(channel);
         asyncStub = sscGrpc.newStub(channel);
     }
 
+    public void shutdown(){
+        if(channel != null && !channel.isShutdown()){
+            channel.shutdownNow();
+        }
+    }
     /**
      * Blocking server-streaming example. Calls listFeatures with a rectangle of interest. Prints each
      * response feature as it arrives.

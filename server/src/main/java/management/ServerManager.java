@@ -16,10 +16,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 
+/**
+ * Singleton Class which manges server data structures and communications
+ */
 public class ServerManager {
 
 
@@ -51,13 +53,6 @@ public class ServerManager {
      * This server name.
      */
     private Server current_server;
-
-
-//    static {
-//        logger.setParent(MessagesManager.ROOT_LOGGER);
-//        logger.setLevel(MessagesManager.LOG_LEVEL);
-//        logger.setUseParentHandlers(true);
-//    }
 
     private ServerManager() {
         cities = new HashSet<>();
@@ -125,18 +120,14 @@ public class ServerManager {
     }
 
     public boolean start() {
-//        ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-//        rootLogger.setLevel(ch.qos.logback.classic.Level.ALL);
+        ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+        rootLogger.setLevel(ch.qos.logback.classic.Level.OFF);
         if (!zk.connect()) return false;
-
         logger.log(Level.SEVERE, "Hello start!");
         zk.connectToMailbox();
-        System.out.println("Loggging msh sh3'al");
-        logger.log(Level.SEVERE, "SEVER SHA3'al");
-        logger.log(Level.CONFIG, "CONFIG SHA3'al");
 //        GrpcMain.run(current_server.getGrpcPort());
-        GrpcMain.run("8000");
 //        RestMain.run(current_server.getRestAddress());
+        GrpcMain.run("8000");
         RestMain.run("8080");
         return true;
     }
@@ -233,15 +224,19 @@ public class ServerManager {
     }
 
 
-    public synchronized void updateShardLeader(String shard, Server server) {
-        logger.log(Level.FINEST, "new shard leader" + shard + " server=" + server.getName());
-        system_shards.put(shard, server);
-
+    public synchronized void updateShardLeader(String shard, Server new_server) {
+        Server current_server = system_shards.get(shard);
+        if (current_server == null || !current_server.equals(new_server)) {
+            logger.log(Level.FINEST, "New server leader was elected for shard [" + shard + "]");
+            logger.log(Level.FINEST, "Shard [" + shard + "] leader is now server [" + new_server.getName() + "]");
+            system_shards.put(shard, new_server);
+        }
     }
 
     public void updateAliveServers(List<String> alive) {
         Server.killAll();
         alive.forEach(server_name -> system_servers.get(server_name).heartbeat());
+        system_servers.values().stream().filter(server -> !server.isAlive()).forEach(Server::shutdown);
     }
 
     public City getCity(String city_name) {

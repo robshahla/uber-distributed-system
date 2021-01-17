@@ -8,19 +8,10 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class RestManager {
 
-    //    private final static Logger logger = Logger.getLogger(RestManager.class.getName());
-//
-//    static {
-//        logger.setParent(MessagesManager.ROOT_LOGGER);
-//        logger.setLevel(MessagesManager.LOG_LEVEL);
-//        logger.setUseParentHandlers(true);
-//
-//    }
-    private static MessagesManager logger = MessagesManager.instance;
+    private static final MessagesManager logger = MessagesManager.instance;
 
     /**
      * Called from the RESET server
@@ -29,14 +20,15 @@ public class RestManager {
      * @return the added ride on success or Error message
      */
     public static String publishRide(Ride ride) {
+        logger.log(Level.FINE, "----------------------- RESET REQUEST (PUBLISH RIDE) -----------------------");
         ServerManager sm = ServerManager.getInstance();
         Server leader_server = sm.getLeader(ride.getStartPosition().getName());
         if (sm.getServer().getName().equals(leader_server.getName())) {
             Ride new_ride = sm.addRideBroadCast(ride);
             return new_ride.toString(); // think how to return to client... serialize for now
         }
-        sscClient grpc_client = new sscClient(leader_server.getGrpcAddress());
-        System.out.println("connecting to server: " + leader_server.getGrpcAddress() + leader_server.getName()); //remove
+        sscClient grpc_client = leader_server.getGrpcClient();
+        System.out.println("Connecting to server: " + leader_server.getGrpcAddress() + leader_server.getName()); //remove
         logger.log(Level.WARNING, "Got this after connecting");
         // @TODO: add retry for a couple of times in case the leader failed while broadcasting - we want to send this to the new leader
         return grpc_client.addRideLeader(ride).toString();
@@ -46,6 +38,7 @@ public class RestManager {
      * Called from the RESET server
      */
     public static String getSnapshot() {
+        logger.log(Level.FINE, "----------------------- RESET REQUEST (GET SNAPSHOT) -----------------------");
         ServerManager sm = ServerManager.getInstance();
         final String this_server_name = sm.getServer().getName();
         Map<String, Server> system_shards = sm.getSystemShards();
@@ -69,7 +62,7 @@ public class RestManager {
                 return;
             }
             logger.log(Level.FINER, "Initializing grpc request with server: " + server.getName());
-            sscClient grpc_client = new sscClient(server.getGrpcAddress());
+            sscClient grpc_client = server.getGrpcClient();
             grpc_client.getRidesAsync(all_rides, latch);
         });
         boolean success = false;
@@ -85,7 +78,7 @@ public class RestManager {
         StringBuilder stringBuilder = new StringBuilder();
         all_rides.forEach(ride -> {
             stringBuilder.append(ride.toString());
-            stringBuilder.append("--------------------------------------------------------------------");
+            stringBuilder.append("------------------------------------\n");
         });
         logger.log(Level.FINE, "Finished getting rides, total of " + all_rides.size() + " ride(s)");
         return stringBuilder.toString();

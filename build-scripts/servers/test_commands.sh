@@ -14,3 +14,5 @@ http://172.18.0.4:8080/publishRide
 curl -X POST -H "Content-Type: application/json" \
 -d '{"first_name": "pzz", "last_name": "pz", "phone": "0500000000", "start_position": "C", "end_position": "A", "departure_time": "15/02/2021", "vacancies": "4", "pd": "5"}' \
 http://172.18.1.6:8080/publishRide
+
+curl 'http://172.18.0.4:8080/snapshot'

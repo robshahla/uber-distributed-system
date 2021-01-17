@@ -2,7 +2,6 @@ import os
 import subprocess
 import sys
 import time
-import cleaner.ZKInit as zkInit
 
 
 # TODO: make this configurable from ENV VAR, using kofiko
@@ -80,14 +79,16 @@ def run_servers(generator, zookeeper_container_name: str, servers_number: int):
     base_name = NetworkConfig().server_base_name
     docker_image_name = 'server:v1'
     os.system(f'cd ./servers/ && docker image build --no-cache -t {docker_image_name} .')
-    for number in range(1, servers_number+1):
+    servers_ips = []
+    for number in range(1, servers_number + 1):
         server_name = base_name + '-' + str(number)
         os.system(f'docker rm -f {server_name}')
         time.sleep(2)
+        generated_ip = next(generator)
         command = [
             'docker', 'run ',
             '--network', NetworkConfig().subnet_name,
-            '--ip', next(generator),
+            '--ip', generated_ip,
             '--link', zookeeper_container_name + ':' + server_name,
             '-d',
             '--name', server_name,
@@ -96,6 +97,8 @@ def run_servers(generator, zookeeper_container_name: str, servers_number: int):
         ]
         # subprocess.run(" ".join(command))
         os.system(" ".join(command))
+        servers_ips.append((server_name, generated_ip))
+    return servers_ips
 
 
 def main():
@@ -115,12 +118,14 @@ def main():
     # running cleaner
     cleaner_container_name = 'cleaner'
     zookeeper_connection = ':'.join([zookeeper_address, network_config.zookeeper_port])
-    run_cleaner(cleaner_container_name,  generator, zookeeper_container_name, zookeeper_connection, shards)
+    run_cleaner(cleaner_container_name, generator, zookeeper_container_name, zookeeper_connection, shards)
 
     # running servers
-    run_servers(generator, zookeeper_container_name, servers_number)
-    print(next(generator))
-    print(next(generator))
+    servers_ips = run_servers(generator, zookeeper_container_name, servers_number)
+    for server_name, ip in servers_ips:
+        print(f"{server_name} -> {ip}")
+    # print(next(generator))
+    # print(next(generator))
 
 
 if __name__ == '__main__':

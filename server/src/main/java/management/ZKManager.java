@@ -21,7 +21,6 @@ import static management.MessagesManager.ProcessMessage;
 
 public class ZKManager {
     private final CountDownLatch connectedSignal = new CountDownLatch(1);
-//    private static Logger logger = Logger.getLogger(ZKManager.class.getName());
     private static MessagesManager logger = MessagesManager.instance;
     private static final int SESSION_TIME_OUT = 3000;
     private ZooKeeper zooKeeper;
@@ -29,12 +28,6 @@ public class ZKManager {
     private boolean isConnected = false;
 
 
-
-//    static {
-//        logger.setParent(MessagesManager.ROOT_LOGGER);
-//        logger.setLevel(MessagesManager.LOG_LEVEL);
-//        logger.setUseParentHandlers(true);
-//    }
     public ZKManager(String address) {
         host_addr = address;
         zooKeeper = null;

@@ -2,6 +2,7 @@ import os
 import subprocess
 import sys
 import time
+import cleaner.ZKInit as zkInit
 
 
 # TODO: make this configurable from ENV VAR, using kofiko
@@ -75,30 +76,42 @@ def run_cleaner(container_name: str, generator, zookeeper_container_name: str, z
     os.system(" ".join(command))
 
 
-def run_servers(generator, zookeeper_container_name: str, servers_number: int):
-    base_name = NetworkConfig().server_base_name
+def run_servers(servers_config: list, zookeeper_container_name: str, servers_number: int):
     docker_image_name = 'server:v1'
     os.system(f'cd ./servers/ && docker image build --no-cache -t {docker_image_name} .')
-    servers_ips = []
-    for number in range(1, servers_number + 1):
-        server_name = base_name + '-' + str(number)
+
+    # remove existing containers
+    for server in servers_config:
+        server_name = server[0]
         os.system(f'docker rm -f {server_name}')
-        time.sleep(2)
-        generated_ip = next(generator)
+
+    time.sleep(2)
+
+    # create the containers
+    for server in servers_config:
+        server_name = server[0]
+        server_ip = server[1]
         command = [
             'docker', 'run ',
             '--network', NetworkConfig().subnet_name,
-            '--ip', generated_ip,
+            '--ip', server_ip,
             '--link', zookeeper_container_name + ':' + server_name,
             '-d',
             '--name', server_name,
             '-t', f'\"{docker_image_name}\"',
             './config.json', server_name
         ]
-        # subprocess.run(" ".join(command))
         os.system(" ".join(command))
-        servers_ips.append((server_name, generated_ip))
-    return servers_ips
+
+
+def insertShardForCity(cities):
+
+    # for city in cities:
+    return [], []
+
+
+def getShardsPartition(shards, servers_number):
+    return []
 
 
 def main():
@@ -118,14 +131,23 @@ def main():
     # running cleaner
     cleaner_container_name = 'cleaner'
     zookeeper_connection = ':'.join([zookeeper_address, network_config.zookeeper_port])
-    run_cleaner(cleaner_container_name, generator, zookeeper_container_name, zookeeper_connection, shards)
+    run_cleaner(cleaner_container_name,  generator, zookeeper_container_name, zookeeper_connection, shards)
+
+    # building tuples of (server_name, server_ip_address, responsible_shards)
+    # cities_info, shards = insertShardForCity(cities)
+    # responsibility_shards = getShardsPartition(shards, servers_number)
+    responsibility_shards = [0, 0, 0]
+    base_server_name = NetworkConfig().server_base_name
+    servers_config = [(base_server_name + '-' + str(number + 1), next(generator), responsibility_shards[number]) for number in range(servers_number)]
+
+    # creating config.json file
+    # create_config_file(zookeeper_connection, cities_info, servers_config)
+
 
     # running servers
-    servers_ips = run_servers(generator, zookeeper_container_name, servers_number)
-    for server_name, ip in servers_ips:
-        print(f"{server_name} -> {ip}")
-    # print(next(generator))
-    # print(next(generator))
+    run_servers(servers_config, zookeeper_container_name, servers_number)
+    print(next(generator))
+    print(next(generator))
 
 
 if __name__ == '__main__':

@@ -8,6 +8,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -99,5 +100,29 @@ public class sscClient {
             e.printStackTrace();
         }
         return reserved_ride[0];
+    }
+
+    public StreamObserver<reservation> nonBlockingReserveRide(reservation reservation, List<Ride> relevant_rides, CountDownLatch countDownLatch) {
+        StreamObserver<reservation> request_stream = asyncStub.reserveRides(new StreamObserver<ride>() {
+            @Override
+            public void onNext(ride value) {
+                synchronized (relevant_rides) {
+                    relevant_rides.add(new Ride(value));
+                }
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                countDownLatch.countDown();
+            }
+
+            @Override
+            public void onCompleted() {
+                countDownLatch.countDown();
+            }
+        });
+
+        request_stream.onNext(reservation);
+        return request_stream;
     }
 }

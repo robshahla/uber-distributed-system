@@ -54,3 +54,5 @@ curl -X POST -H "Content-Type: application/json" -d '{"first_name": "dwight", "l
 # kill s1 leaving s2 leader for 2 shards, which are all the shards in the system and then request a snapshot,
 # he will be stuck because he initiates a latch with the nunmber of shards, and waits on it, the latch should,
 # be initiated on the number of servers that I should contact, in this case only 1 since s2 is the only leader...
+
+#TODO: when asking a leader to give rides,

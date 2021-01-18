@@ -5,9 +5,14 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import entities.Ride;
+import entities.Server;
 import org.apache.jute.compiler.JString;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -33,7 +38,7 @@ public class MessagesManager {
             Ride received_ride = Ride.deserialize(ride_as_json);
             if (operation.getAsString().equals(OPERATION_NEW_RIDE)) {
                 ServerManager.getInstance().addRide(received_ride);
-            }else if(operation.getAsString().equals(OPERATION_UPDATE_RIDE)){
+            } else if (operation.getAsString().equals(OPERATION_UPDATE_RIDE)) {
                 ServerManager.getInstance().updateRide(received_ride);
             }
         }
@@ -53,6 +58,14 @@ public class MessagesManager {
             json_message.add(OPERATION, new JsonPrimitive(OPERATION_UPDATE_RIDE));
             json_message.add(DATA, JsonParser.parseString(updated_ride.serialize()));
             return json_message.toString();
+        }
+
+        public static void appendMessageToServers(Set<Server> servers, String message, Map<Server, List<String>> message_map) {
+
+            servers.forEach(server -> {
+                message_map.computeIfAbsent(server, k -> new ArrayList<>());
+                message_map.get(server).add(message);
+            });
         }
     }
 

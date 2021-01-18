@@ -141,16 +141,20 @@ public class ZKManager {
      * @param to_servers servers name to send the message to.
      * @param message    the message to sent
      */
-    public void atomicBroadCastMessage(Set<Server> to_servers, String message) {
+    public void atomicBroadCastMessage(Map<Server, List<String>> message_map) {
         List<Op> create_node_ops = new ArrayList<>();
         String message_node_name = ServerManager.getInstance().getServer().getName() + "-";
-        byte[] message_bytes = message.getBytes(StandardCharsets.UTF_8);
-        to_servers.stream().filter(Server::isAlive).forEach(server -> {
-            String path_to_node = Paths.get(ZKPaths.MESSAGES, server.getName(), message_node_name).toString();
-            Op operation = Op.create(path_to_node, message_bytes,
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
-            create_node_ops.add(operation);
-        });
+        message_map.entrySet().stream().filter(entry -> entry.getKey().isAlive())
+                .forEach(entry -> {
+                    Server server = entry.getKey();
+                    entry.getValue().forEach(message -> {
+                        byte[] message_bytes = message.getBytes(StandardCharsets.UTF_8);
+                        String path_to_node = Paths.get(ZKPaths.MESSAGES, server.getName(), message_node_name).toString();
+                        Op operation = Op.create(path_to_node, message_bytes,
+                                ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+                        create_node_ops.add(operation);
+                    });
+                });
         try {
             zooKeeper.multi(create_node_ops);
         } catch (InterruptedException | KeeperException e) {

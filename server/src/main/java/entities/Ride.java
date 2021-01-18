@@ -130,13 +130,25 @@ public class Ride {
      * check if the person suggesting the ride will accept going
      * to the given city to pick someone up if there is available space
      */
-    public boolean canPickUpFrom(City city) {
+    public boolean canPickUpFrom(City start_city, City end_city) {
+        if (!this.getEndPosition().getName().equals(end_city.getName())) return false;
         if (reservations.size() >= vacancies) return false;
-        double distance = distanceToLine(city);
+        double distance = distanceToLine(start_city);
         if (distance > pd) return false;
-        return isCityInBorder(city, distance);
+        return isCityInBorder(start_city, distance);
     }
 
+    public boolean canDropIn(City start_city, City end_city) {
+        if (!this.getStartPosition().getName().equals(start_city.getName())) return false;
+        if (reservations.size() >= vacancies) return false;
+        double distance = distanceToLine(end_city);
+        if (distance > pd) return false;
+        return isCityInBorder(end_city, distance);
+    }
+
+    public boolean canServe(City start_city, City end_city) {
+        return canPickUpFrom(start_city, end_city) || canDropIn(start_city, end_city);
+    }
 
     public double distanceToLine(City other) {
         City start_city = getStartPosition();

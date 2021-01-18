@@ -55,21 +55,21 @@ public class ServerManager {
      */
     private Server current_server;
 
-    private final Semaphore local_loock;
-
     private ServerManager() {
         cities = new HashSet<>();
         rides = new ArrayList<>();
         system_shards = new HashMap<>();
         primary_shards = new ArrayList<>();
         system_servers = new HashMap<>();
-        local_loock = new Semaphore(1);
     }
 
-    public Semaphore getLocalLock() {
-        return local_loock;
+    public String gLock() {
+        return zk.lock();
     }
 
+    public void releaseGLock(String g_lock) {
+        zk.releaseLock(g_lock);
+    }
     public static ServerManager getInstance() {
         if (instance == null) {
             instance = new ServerManager();
@@ -168,7 +168,10 @@ public class ServerManager {
         if (result_ride.getId() < 0) {
             result_ride.setId(zk.generateUniqueId());
             Set<Server> followers = getCityFollowers(result_ride.getStartPosition());
-            zk.atomicBroadCastMessage(followers, MessagesManager.MessageFactory.newRideBroadCastMessage(result_ride));
+            Map<Server, List<String>> message_map = new HashMap<>();
+            String message = MessagesManager.MessageFactory.newRideBroadCastMessage(result_ride);
+            MessagesManager.MessageFactory.appendMessageToServers(followers, message, message_map);
+            atomicBroadcast(message_map);
         }
         return result_ride; // response to the user.
     }
@@ -224,10 +227,13 @@ public class ServerManager {
         synchronized (this.rides) {
             assert reservation.getPath().size() == 2;
             String start_city_name = reservation.getPath().get(0);
+            String end_city_name = reservation.getPath().get(1);
             final City start_city = getCity(start_city_name);
+            final City end_city = getCity(end_city_name);
+
             Ride ride_to_reserve = rides.stream().filter(ride -> isLeaderForRide(ride) &&
-                    ride.canPickUpFrom(start_city) &&
-                    ride.getDepartureTime().equals(reservation.getDepartureTime()) //TODO: check also if vacancies > 0
+                    (ride.canPickUpFrom(start_city, end_city) || ride.canDropIn(start_city, end_city)) &&
+                    ride.getDepartureTime().equals(reservation.getDepartureTime())
             ).min((ride1, ride2) -> {
                 double d1 = ride1.distanceToLine(start_city);
                 double d2 = ride2.distanceToLine(start_city);
@@ -239,8 +245,13 @@ public class ServerManager {
                 return Ride.nullRide();
             }
             ride_to_reserve.reserve(reservation.getFirstName() + " " + reservation.getLastName());
+
+            //getting the followers
             Set<Server> followers = getCityFollowers(ride_to_reserve.getStartPosition());
-            zk.atomicBroadCastMessage(followers, MessagesManager.MessageFactory.updateRideBroadCastMessage(ride_to_reserve));
+            Map<Server, List<String>> message_map = new HashMap<>();
+            String message = MessagesManager.MessageFactory.updateRideBroadCastMessage(ride_to_reserve);
+            MessagesManager.MessageFactory.appendMessageToServers(followers, message, message_map);
+            atomicBroadcast(message_map);
             return ride_to_reserve;
         }
     }
@@ -322,5 +333,9 @@ public class ServerManager {
             return null;
         }
         return json_data;
+    }
+
+    public synchronized void atomicBroadcast(Map<Server, List<String>> message_map) {
+        zk.atomicBroadCastMessage(message_map);
     }
 }

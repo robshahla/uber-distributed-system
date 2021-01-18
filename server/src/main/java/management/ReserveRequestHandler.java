@@ -49,6 +49,10 @@ public class ReserveRequestHandler implements StreamObserver<reservation> {
         List<Ride> relevant_rides = ServerManager.getInstance()
                 .getRidesForCities(path);
 
+        for (Ride relevant_ride : relevant_rides) {
+            responseObserver.onNext(relevant_ride.getRideRequestForGRPC());
+        }
+        responseObserver.onCompleted();
 
     }
 

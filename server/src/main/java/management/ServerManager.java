@@ -15,6 +15,7 @@ import rest.host.RestMain;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -45,7 +46,7 @@ public class ServerManager {
     /**
      * Represents all the rides from cities which this leader is responsible for (@field shards)
      */
-    private final ArrayList<Ride> rides;
+    private final List<Ride> rides;
     public ZKManager zk;
     //    private static final Logger logger = Logger.getLogger(ServerManager.class.getName());
     private static MessagesManager logger = MessagesManager.instance;
@@ -54,12 +55,19 @@ public class ServerManager {
      */
     private Server current_server;
 
+    private final Semaphore local_loock;
+
     private ServerManager() {
         cities = new HashSet<>();
         rides = new ArrayList<>();
         system_shards = new HashMap<>();
         primary_shards = new ArrayList<>();
         system_servers = new HashMap<>();
+        local_loock = new Semaphore(1);
+    }
+
+    public Semaphore getLocalLock() {
+        return local_loock;
     }
 
     public static ServerManager getInstance() {
@@ -125,8 +133,6 @@ public class ServerManager {
         if (!zk.connect()) return false;
         logger.log(Level.SEVERE, "Hello start!");
         zk.connectToMailbox();
-//        GrpcMain.run(current_server.getGrpcPort());
-//        RestMain.run(current_server.getRestAddress());
         GrpcMain.run("8000");
         RestMain.run("8080");
         return true;
@@ -159,7 +165,7 @@ public class ServerManager {
         Ride result_ride = addRide(ride);
         if (result_ride.getId() < 0) {
             result_ride.setId(zk.generateUniqueId());
-            Set<Server> followers = ServerManager.getInstance().getCityFollowers(result_ride.getStartPosition());
+            Set<Server> followers = getCityFollowers(result_ride.getStartPosition());
             zk.atomicBroadCastMessage(followers, MessagesManager.MessageFactory.newRideBroadCastMessage(result_ride));
         }
         return result_ride; // response to the user.
@@ -173,24 +179,67 @@ public class ServerManager {
      * a new leader will broadcast again, and a follower might receive a command to add the same ride several times.
      */
     public Ride addRide(Ride ride) {
-        synchronized (this.rides) {
-            Ride existing_ride = this.rides.stream().filter(ride::equals).findAny().orElse(null);
-            if (existing_ride == null) {
-//                ride.setId(zk.generateUniqueId());
+        synchronized (rides) {
+            Ride existing_ride = this.rides.stream().filter(ride::equals).findAny().orElse(Ride.nullRide());
+            if (existing_ride.isNull()) {
                 rides.add(ride);
                 return this.rides.stream().filter(ride::equals).findAny().orElse(null);
-//                return ride;
             }
-
             return existing_ride;
         }
     }
 
-    public Ride addReservation(Reservation reservation) {
+    public void updateRide(Ride ride_to_update) {
+        synchronized (rides) {
+            boolean removed = rides.removeIf(ride -> ride.getId() == ride_to_update.getId());
+            if (removed && !ride_to_update.isNull()) {
+                rides.add(ride_to_update);
+            }
+        }
 
-        // TODO: check if there is a suitable ride, if so reserve it and return ride, otherwise return "No ride was found"
-        return reservation != null ? null : null;
     }
+
+    private List<Ride> getRidesForCity(String city_name) {
+        City city = getCity(city_name);
+        return rides.stream()
+                .filter(ride -> ride.canPickUpFrom(city))
+                .collect(Collectors.toList());
+    }
+
+    public List<Ride> getRidesForCities(List<String> cities) {
+        synchronized (rides) {
+            List<Ride> available_rides = new ArrayList<>();
+            for (String city_name : cities) {
+                available_rides.addAll(getRidesForCity(city_name));
+            }
+            return available_rides;
+        }
+    }
+
+    public Ride reserveOneRideIfAvailableAndBroadCast(Reservation reservation) {
+        synchronized (this.rides) {
+            assert reservation.getPath().size() == 2;
+            String start_city_name = reservation.getPath().get(0);
+            final City start_city = getCity(start_city_name);
+            Ride ride_to_reserve = rides.stream().filter(ride -> isLeaderForRide(ride) &&
+                    ride.canPickUpFrom(start_city) &&
+                    ride.getDepartureTime().equals(reservation.getDepartureTime())
+            ).min((ride1, ride2) -> {
+                double d1 = ride1.distanceToLine(start_city);
+                double d2 = ride2.distanceToLine(start_city);
+                if (d1 == d2) return 0;
+                else return d1 - d2 < 0 ? -1 : 1;
+            }).orElse(null);
+            if (ride_to_reserve == null) {
+                return Ride.nullRide();
+            }
+            ride_to_reserve.reserve(reservation.getFirstName() + " " + reservation.getLastName());
+            Set<Server> followers = getCityFollowers(ride_to_reserve.getStartPosition());
+            zk.atomicBroadCastMessage(followers, MessagesManager.MessageFactory.updateRideBroadCastMessage(ride_to_reserve));
+            return ride_to_reserve;
+        }
+    }
+
 
     private boolean isLeaderForRide(Ride ride) {
         assert ride != null;
@@ -224,19 +273,23 @@ public class ServerManager {
     }
 
 
-    public synchronized void updateShardLeader(String shard, Server new_server) {
-        Server current_server = system_shards.get(shard);
-        if (current_server == null || !current_server.equals(new_server)) {
-            logger.log(Level.FINEST, "New server leader was elected for shard [" + shard + "]");
-            logger.log(Level.FINEST, "Shard [" + shard + "] leader is now server [" + new_server.getName() + "]");
-            system_shards.put(shard, new_server);
+    public void updateShardLeader(String shard, Server new_server) {
+        synchronized (system_shards) {
+            Server current_server = system_shards.get(shard);
+            if (current_server == null || !current_server.equals(new_server)) {
+                logger.log(Level.FINEST, "New server leader was elected for shard [" + shard + "]");
+                logger.log(Level.FINEST, "Shard [" + shard + "] leader is now server [" + new_server.getName() + "]");
+                system_shards.put(shard, new_server);
+            }
         }
     }
 
     public void updateAliveServers(List<String> alive) {
-        Server.killAll();
-        alive.forEach(server_name -> system_servers.get(server_name).heartbeat());
-        system_servers.values().stream().filter(server -> !server.isAlive()).forEach(Server::shutdown);
+        synchronized (system_servers) {
+            Server.killAll();
+            alive.forEach(server_name -> system_servers.get(server_name).heartbeat());
+            system_servers.values().stream().filter(server -> !server.isAlive()).forEach(Server::shutdown);
+        }
     }
 
     public City getCity(String city_name) {
@@ -260,5 +313,4 @@ public class ServerManager {
         }
         return json_data;
     }
-
 }

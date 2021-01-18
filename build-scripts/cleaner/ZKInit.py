@@ -42,7 +42,8 @@ def zkClean(zookeeper: KazooClient, root):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Cleans & build zookeeper")
-    parser.add_argument('--zookeeper_host', type=str, help="host address to connect to (for example --zookeeper-host localhost:2181")
+    parser.add_argument('--zookeeper_host', type=str,
+                        help="host address to connect to (for example --zookeeper-host localhost:2181")
     parser.add_argument('--shards', nargs="+", default=[], help="shards list (for example --shards shard-1 shard-2")
     args = parser.parse_args()
     shards_list = args.shards
@@ -52,8 +53,9 @@ if __name__ == "__main__":
     ACTIVE = os.path.join(ROOT, "active")
     MESSAGES = os.path.join(ROOT, "mailbox")
     COUNTER = os.path.join(ROOT, "id-generator")
+    GLock = os.path.join(ROOT, "G-Lock");
 
-    PATHS = [ROOT, ELECTIONS, ACTIVE, MESSAGES, COUNTER]
+    PATHS = [ROOT, ELECTIONS, ACTIVE, MESSAGES, COUNTER,GLock]
     for shard in shards_list:
         PATHS.append(os.path.join(ELECTIONS, shard))
     zk = zkConnect(args.zookeeper_host)

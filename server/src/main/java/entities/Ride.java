@@ -15,7 +15,7 @@ import static java.lang.Math.*;
 public class Ride implements Serializable {
 
     private int id;
-    private final String first_name, last_name, phone, start_position, end_position, departure_time;
+    private String first_name, last_name, phone, start_position, end_position, departure_time;
     int vacancies;
     double pd;
     ArrayList<String> reservations;
@@ -45,6 +45,13 @@ public class Ride implements Serializable {
                 request.getPd());
     }
 
+    private Ride() {
+        id = Integer.MIN_VALUE;
+    }
+
+    public boolean isNull() {
+        return id < -1; //TODO maybe < 0?
+    }
 
     public void setId(int id) {
         this.id = id;
@@ -107,13 +114,16 @@ public class Ride implements Serializable {
     }
 
     /**
-     * check if the person suggesting the ride will accept going to the given city to pick someone up
+     * check if the person suggesting the ride will accept going
+     * to the given city to pick someone up if there is available space
      */
-    public boolean isCityNeighbor(City city) {
+    public boolean canPickUpFrom(City city) {
+        if (reservations.size() >= vacancies) return false;
         double distance = distanceToLine(city);
         if (distance > pd) return false;
         return isCityInBorder(city, distance);
     }
+
 
     public double distanceToLine(City other) {
         City start_city = getStartPosition();
@@ -121,7 +131,7 @@ public class Ride implements Serializable {
         assert start_city != null && end_city != null;
         double dx = end_city.getX() - start_city.getX();
         double dy = end_city.getY() - start_city.getY();
-        double m = Double.POSITIVE_INFINITY;
+        double m;
         double distance = abs(start_city.getX() - other.getX());
         if (dx != 0) {
             m = dy / dx;
@@ -140,6 +150,8 @@ public class Ride implements Serializable {
     }
 
     private boolean isCityInBorder(City city, double distance) {
+        if (city.getName().equals(getStartPosition().getName())) return true;
+        if (city.getName().equals(getEndPosition().getName())) return false;
         double d1 = distanceBetween(city, getStartPosition());
         double d2 = distanceBetween(city, getEndPosition());
         double angel1 = asin(distance / d1);
@@ -217,4 +229,21 @@ public class Ride implements Serializable {
         return ride;
     }
 
+    public ride getRideRequestForGRPC() {
+        return ride.newBuilder()
+                .setFirstName(getFirstName())
+                .setLastName(getLastName())
+                .setPhone(getPhone())
+                .setStartPosition(getStartPosition().getName())
+                .setEndPosition(getEndPosition().getName())
+                .setDepartureTime(getDepartureTime())
+                .setVacancies(getVacancies())
+                .setPd(getPd())
+                .setId(getId())
+                .build();
+    }
+
+    public static Ride nullRide() {
+        return new Ride();
+    }
 }

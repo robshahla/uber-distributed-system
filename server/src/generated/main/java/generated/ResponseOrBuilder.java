@@ -3,8 +3,8 @@
 
 package generated;
 
-public interface responseOrBuilder extends
-    // @@protoc_insertion_point(interface_extends:ssc.response)
+public interface ResponseOrBuilder extends
+    // @@protoc_insertion_point(interface_extends:ssc.Response)
     com.google.protobuf.MessageOrBuilder {
 
   /**

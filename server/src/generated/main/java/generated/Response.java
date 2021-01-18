@@ -4,18 +4,18 @@
 package generated;
 
 /**
- * Protobuf type {@code ssc.response}
+ * Protobuf type {@code ssc.Response}
  */
-public final class response extends
+public final class Response extends
     com.google.protobuf.GeneratedMessageV3 implements
-    // @@protoc_insertion_point(message_implements:ssc.response)
-    responseOrBuilder {
+    // @@protoc_insertion_point(message_implements:ssc.Response)
+    ResponseOrBuilder {
 private static final long serialVersionUID = 0L;
-  // Use response.newBuilder() to construct.
-  private response(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  // Use Response.newBuilder() to construct.
+  private Response(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
-  private response() {
+  private Response() {
     msg_ = "";
   }
 
@@ -23,7 +23,7 @@ private static final long serialVersionUID = 0L;
   @SuppressWarnings({"unused"})
   protected java.lang.Object newInstance(
       UnusedPrivateParameter unused) {
-    return new response();
+    return new Response();
   }
 
   @java.lang.Override
@@ -31,7 +31,7 @@ private static final long serialVersionUID = 0L;
   getUnknownFields() {
     return this.unknownFields;
   }
-  private response(
+  private Response(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -76,15 +76,15 @@ private static final long serialVersionUID = 0L;
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return generated.Scheme.internal_static_ssc_response_descriptor;
+    return generated.Scheme.internal_static_ssc_Response_descriptor;
   }
 
   @java.lang.Override
   protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return generated.Scheme.internal_static_ssc_response_fieldAccessorTable
+    return generated.Scheme.internal_static_ssc_Response_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            generated.response.class, generated.response.Builder.class);
+            generated.Response.class, generated.Response.Builder.class);
   }
 
   public static final int MSG_FIELD_NUMBER = 1;
@@ -164,10 +164,10 @@ private static final long serialVersionUID = 0L;
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof generated.response)) {
+    if (!(obj instanceof generated.Response)) {
       return super.equals(obj);
     }
-    generated.response other = (generated.response) obj;
+    generated.Response other = (generated.Response) obj;
 
     if (!getMsg()
         .equals(other.getMsg())) return false;
@@ -189,69 +189,69 @@ private static final long serialVersionUID = 0L;
     return hash;
   }
 
-  public static generated.response parseFrom(
+  public static generated.Response parseFrom(
       java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static generated.response parseFrom(
+  public static generated.Response parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static generated.response parseFrom(
+  public static generated.Response parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static generated.response parseFrom(
+  public static generated.Response parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static generated.response parseFrom(byte[] data)
+  public static generated.Response parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static generated.response parseFrom(
+  public static generated.Response parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static generated.response parseFrom(java.io.InputStream input)
+  public static generated.Response parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static generated.response parseFrom(
+  public static generated.Response parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static generated.response parseDelimitedFrom(java.io.InputStream input)
+  public static generated.Response parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-  public static generated.response parseDelimitedFrom(
+  public static generated.Response parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static generated.response parseFrom(
+  public static generated.Response parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static generated.response parseFrom(
+  public static generated.Response parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -264,7 +264,7 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(generated.response prototype) {
+  public static Builder newBuilder(generated.Response prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
   @java.lang.Override
@@ -280,26 +280,26 @@ private static final long serialVersionUID = 0L;
     return builder;
   }
   /**
-   * Protobuf type {@code ssc.response}
+   * Protobuf type {@code ssc.Response}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-      // @@protoc_insertion_point(builder_implements:ssc.response)
-      generated.responseOrBuilder {
+      // @@protoc_insertion_point(builder_implements:ssc.Response)
+      generated.ResponseOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return generated.Scheme.internal_static_ssc_response_descriptor;
+      return generated.Scheme.internal_static_ssc_Response_descriptor;
     }
 
     @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return generated.Scheme.internal_static_ssc_response_fieldAccessorTable
+      return generated.Scheme.internal_static_ssc_Response_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              generated.response.class, generated.response.Builder.class);
+              generated.Response.class, generated.Response.Builder.class);
     }
 
-    // Construct using generated.response.newBuilder()
+    // Construct using generated.Response.newBuilder()
     private Builder() {
       maybeForceBuilderInitialization();
     }
@@ -325,17 +325,17 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return generated.Scheme.internal_static_ssc_response_descriptor;
+      return generated.Scheme.internal_static_ssc_Response_descriptor;
     }
 
     @java.lang.Override
-    public generated.response getDefaultInstanceForType() {
-      return generated.response.getDefaultInstance();
+    public generated.Response getDefaultInstanceForType() {
+      return generated.Response.getDefaultInstance();
     }
 
     @java.lang.Override
-    public generated.response build() {
-      generated.response result = buildPartial();
+    public generated.Response build() {
+      generated.Response result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
@@ -343,8 +343,8 @@ private static final long serialVersionUID = 0L;
     }
 
     @java.lang.Override
-    public generated.response buildPartial() {
-      generated.response result = new generated.response(this);
+    public generated.Response buildPartial() {
+      generated.Response result = new generated.Response(this);
       result.msg_ = msg_;
       onBuilt();
       return result;
@@ -384,16 +384,16 @@ private static final long serialVersionUID = 0L;
     }
     @java.lang.Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof generated.response) {
-        return mergeFrom((generated.response)other);
+      if (other instanceof generated.Response) {
+        return mergeFrom((generated.Response)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(generated.response other) {
-      if (other == generated.response.getDefaultInstance()) return this;
+    public Builder mergeFrom(generated.Response other) {
+      if (other == generated.Response.getDefaultInstance()) return this;
       if (!other.getMsg().isEmpty()) {
         msg_ = other.msg_;
         onChanged();
@@ -413,11 +413,11 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      generated.response parsedMessage = null;
+      generated.Response parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (generated.response) e.getUnfinishedMessage();
+        parsedMessage = (generated.Response) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
@@ -515,41 +515,41 @@ private static final long serialVersionUID = 0L;
     }
 
 
-    // @@protoc_insertion_point(builder_scope:ssc.response)
+    // @@protoc_insertion_point(builder_scope:ssc.Response)
   }
 
-  // @@protoc_insertion_point(class_scope:ssc.response)
-  private static final generated.response DEFAULT_INSTANCE;
+  // @@protoc_insertion_point(class_scope:ssc.Response)
+  private static final generated.Response DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new generated.response();
+    DEFAULT_INSTANCE = new generated.Response();
   }
 
-  public static generated.response getDefaultInstance() {
+  public static generated.Response getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
-  private static final com.google.protobuf.Parser<response>
-      PARSER = new com.google.protobuf.AbstractParser<response>() {
+  private static final com.google.protobuf.Parser<Response>
+      PARSER = new com.google.protobuf.AbstractParser<Response>() {
     @java.lang.Override
-    public response parsePartialFrom(
+    public Response parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      return new response(input, extensionRegistry);
+      return new Response(input, extensionRegistry);
     }
   };
 
-  public static com.google.protobuf.Parser<response> parser() {
+  public static com.google.protobuf.Parser<Response> parser() {
     return PARSER;
   }
 
   @java.lang.Override
-  public com.google.protobuf.Parser<response> getParserForType() {
+  public com.google.protobuf.Parser<Response> getParserForType() {
     return PARSER;
   }
 
   @java.lang.Override
-  public generated.response getDefaultInstanceForType() {
+  public generated.Response getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 

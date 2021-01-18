@@ -98,4 +98,34 @@ public interface rideOrBuilder extends
    * @return The pd.
    */
   double getPd();
+
+  /**
+   * <code>repeated .ssc.reservation reservations = 9;</code>
+   */
+  java.util.List<generated.reservation> 
+      getReservationsList();
+  /**
+   * <code>repeated .ssc.reservation reservations = 9;</code>
+   */
+  generated.reservation getReservations(int index);
+  /**
+   * <code>repeated .ssc.reservation reservations = 9;</code>
+   */
+  int getReservationsCount();
+  /**
+   * <code>repeated .ssc.reservation reservations = 9;</code>
+   */
+  java.util.List<? extends generated.reservationOrBuilder> 
+      getReservationsOrBuilderList();
+  /**
+   * <code>repeated .ssc.reservation reservations = 9;</code>
+   */
+  generated.reservationOrBuilder getReservationsOrBuilder(
+      int index);
+
+  /**
+   * <code>int32 id = 10;</code>
+   * @return The id.
+   */
+  int getId();
 }

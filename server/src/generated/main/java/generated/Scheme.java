@@ -20,20 +20,20 @@ public final class Scheme {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_ssc_emptyMessage_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_ssc_response_descriptor;
+    internal_static_ssc_Response_descriptor;
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_ssc_response_fieldAccessorTable;
-  static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_ssc_ride_descriptor;
-  static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_ssc_ride_fieldAccessorTable;
+      internal_static_ssc_Response_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_ssc_reservation_descriptor;
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_ssc_reservation_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_ssc_ride_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_ssc_ride_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -43,21 +43,20 @@ public final class Scheme {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\014scheme.proto\022\003ssc\"\016\n\014emptyMessage\"\027\n\010r" +
-      "esponse\022\013\n\003msg\030\001 \001(\t\"\241\001\n\004ride\022\022\n\nfirst_n" +
-      "ame\030\001 \001(\t\022\021\n\tlast_name\030\002 \001(\t\022\r\n\005phone\030\003 " +
-      "\001(\t\022\026\n\016start_position\030\004 \001(\t\022\024\n\014end_posit" +
-      "ion\030\005 \001(\t\022\026\n\016departure_time\030\006 \001(\t\022\021\n\tvac" +
-      "ancies\030\007 \001(\005\022\n\n\002pd\030\010 \001(\001\"Z\n\013reservation\022" +
-      "\022\n\nfirst_name\030\001 \001(\t\022\021\n\tlast_name\030\002 \001(\t\022\026" +
-      "\n\016departure_time\030\003 \001(\t\022\014\n\004path\030\004 \001(\t2\362\001\n" +
-      "\003ssc\022$\n\006upsert\022\t.ssc.ride\032\r.ssc.response" +
-      "\"\000\0225\n\rgetRidesAsync\022\021.ssc.emptyMessage\032\r" +
-      ".ssc.response\"\0000\001\022+\n\raddRideLeader\022\t.ssc" +
-      ".ride\032\r.ssc.response\"\000\022-\n\017addRideFollowe" +
-      "r\022\t.ssc.ride\032\r.ssc.response\"\000\0222\n\021reserve" +
-      "RideLeader\022\020.ssc.reservation\032\t.ssc.ride\"" +
-      "\000B\r\n\tgeneratedP\001b\006proto3"
+      "\n\014scheme.proto\022\003ssc\"\016\n\014emptyMessage\"\027\n\010R" +
+      "esponse\022\013\n\003msg\030\001 \001(\t\"Z\n\013reservation\022\022\n\nf" +
+      "irst_name\030\001 \001(\t\022\021\n\tlast_name\030\002 \001(\t\022\026\n\016de" +
+      "parture_time\030\003 \001(\t\022\014\n\004path\030\004 \003(\t\"\325\001\n\004rid" +
+      "e\022\022\n\nfirst_name\030\001 \001(\t\022\021\n\tlast_name\030\002 \001(\t" +
+      "\022\r\n\005phone\030\003 \001(\t\022\026\n\016start_position\030\004 \001(\t\022" +
+      "\024\n\014end_position\030\005 \001(\t\022\026\n\016departure_time\030" +
+      "\006 \001(\t\022\021\n\tvacancies\030\007 \001(\005\022\n\n\002pd\030\010 \001(\001\022&\n\014" +
+      "reservations\030\t \003(\0132\020.ssc.reservation\022\n\n\002" +
+      "id\030\n \001(\0052\234\001\n\003ssc\0225\n\rgetRidesAsync\022\021.ssc." +
+      "emptyMessage\032\r.ssc.Response\"\0000\001\022+\n\raddRi" +
+      "deLeader\022\t.ssc.ride\032\r.ssc.Response\"\000\0221\n\014" +
+      "reserveRides\022\020.ssc.reservation\032\t.ssc.rid" +
+      "e\"\000(\0010\001B\r\n\tgeneratedP\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -69,24 +68,24 @@ public final class Scheme {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ssc_emptyMessage_descriptor,
         new java.lang.String[] { });
-    internal_static_ssc_response_descriptor =
+    internal_static_ssc_Response_descriptor =
       getDescriptor().getMessageTypes().get(1);
-    internal_static_ssc_response_fieldAccessorTable = new
+    internal_static_ssc_Response_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_ssc_response_descriptor,
+        internal_static_ssc_Response_descriptor,
         new java.lang.String[] { "Msg", });
-    internal_static_ssc_ride_descriptor =
-      getDescriptor().getMessageTypes().get(2);
-    internal_static_ssc_ride_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_ssc_ride_descriptor,
-        new java.lang.String[] { "FirstName", "LastName", "Phone", "StartPosition", "EndPosition", "DepartureTime", "Vacancies", "Pd", });
     internal_static_ssc_reservation_descriptor =
-      getDescriptor().getMessageTypes().get(3);
+      getDescriptor().getMessageTypes().get(2);
     internal_static_ssc_reservation_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ssc_reservation_descriptor,
         new java.lang.String[] { "FirstName", "LastName", "DepartureTime", "Path", });
+    internal_static_ssc_ride_descriptor =
+      getDescriptor().getMessageTypes().get(3);
+    internal_static_ssc_ride_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_ssc_ride_descriptor,
+        new java.lang.String[] { "FirstName", "LastName", "Phone", "StartPosition", "EndPosition", "DepartureTime", "Vacancies", "Pd", "Reservations", "Id", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

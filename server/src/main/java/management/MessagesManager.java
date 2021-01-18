@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import entities.Ride;
+import org.apache.jute.compiler.JString;
 
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
@@ -20,16 +21,20 @@ public class MessagesManager {
     private static final String DATA = "data";
 
     private static final String OPERATION_NEW_RIDE = "new-ride";
+    private static final String OPERATION_UPDATE_RIDE = "update-ride";
 
     public static void ProcessMessage(byte[] message) {
         String data_string = new String(message, StandardCharsets.UTF_8);
         JsonObject json_message = JsonParser.parseString(data_string).getAsJsonObject();
         JsonElement operation = json_message.get(OPERATION);
-        if (operation != null) {
+        JsonElement data = json_message.get(DATA);
+        if (operation != null && data != null) {
+            JsonObject ride_as_json = data.getAsJsonObject();
+            Ride received_ride = Ride.deserialize(ride_as_json);
             if (operation.getAsString().equals(OPERATION_NEW_RIDE)) {
-                JsonObject ride_as_json = json_message.get(DATA).getAsJsonObject();
-                Ride ride_to_add = Ride.deserialize(ride_as_json);
-                ServerManager.getInstance().addRide(ride_to_add);
+                ServerManager.getInstance().addRide(received_ride);
+            }else if(operation.getAsString().equals(OPERATION_UPDATE_RIDE)){
+                ServerManager.getInstance().updateRide(received_ride);
             }
         }
     }
@@ -40,6 +45,13 @@ public class MessagesManager {
             JsonObject json_message = new JsonObject();
             json_message.add(OPERATION, new JsonPrimitive(OPERATION_NEW_RIDE));
             json_message.add(DATA, JsonParser.parseString(new_ride.serialize()));
+            return json_message.toString();
+        }
+
+        public static String updateRideBroadCastMessage(Ride updated_ride) {
+            JsonObject json_message = new JsonObject();
+            json_message.add(OPERATION, new JsonPrimitive(OPERATION_UPDATE_RIDE));
+            json_message.add(DATA, JsonParser.parseString(updated_ride.serialize()));
             return json_message.toString();
         }
     }

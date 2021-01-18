@@ -44,14 +44,27 @@ public interface reservationOrBuilder extends
       getDepartureTimeBytes();
 
   /**
-   * <code>string path = 4;</code>
-   * @return The path.
+   * <code>repeated string path = 4;</code>
+   * @return A list containing the path.
    */
-  java.lang.String getPath();
+  java.util.List<java.lang.String>
+      getPathList();
   /**
-   * <code>string path = 4;</code>
-   * @return The bytes for path.
+   * <code>repeated string path = 4;</code>
+   * @return The count of path.
+   */
+  int getPathCount();
+  /**
+   * <code>repeated string path = 4;</code>
+   * @param index The index of the element to return.
+   * @return The path at the given index.
+   */
+  java.lang.String getPath(int index);
+  /**
+   * <code>repeated string path = 4;</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the path at the given index.
    */
   com.google.protobuf.ByteString
-      getPathBytes();
+      getPathBytes(int index);
 }

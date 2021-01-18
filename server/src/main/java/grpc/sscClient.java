@@ -2,7 +2,6 @@ package grpc;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import entities.Reservation;
 import entities.Ride;
 import generated.*;
 import io.grpc.ManagedChannel;
@@ -20,77 +19,34 @@ public class sscClient {
     private static final emptyMessage EMPTY_MESSAGE = emptyMessage.newBuilder().build();
     private final sscGrpc.sscBlockingStub blockingStub;
     private final sscGrpc.sscStub asyncStub;
-    private ManagedChannel channel;
+    private final ManagedChannel channel;
+
+
     public sscClient(String address) {
         channel = ManagedChannelBuilder.forTarget(address).usePlaintext().build();
         blockingStub = sscGrpc.newBlockingStub(channel);
         asyncStub = sscGrpc.newStub(channel);
     }
 
-    public void shutdown(){
-        if(channel != null && !channel.isShutdown()){
+    public void shutdown() {
+        if (channel != null && !channel.isShutdown()) {
             channel.shutdownNow();
         }
     }
-    /**
-     * Blocking server-streaming example. Calls listFeatures with a rectangle of interest. Prints each
-     * response feature as it arrives.
-     */
-    public void upsert() {
-        ride request =
-                ride.newBuilder()
-                        .setFirstName("Emil").setLastName("Kh").setPhone("05000").setStartPosition("A")
-                        .setEndPosition("B").setDepartureTime("11/2/2020").setVacancies(3).setPd(4).build();
 
-        blockingStub.upsert(request);
-    }
 
     public Ride addRideLeader(Ride msg) {
-        ride request = getRideRequest(msg);
+        ride request = msg.getRideRequestForGRPC();
         String new_ride = blockingStub.withDeadlineAfter(3, TimeUnit.SECONDS).addRideLeader(request).getMsg(); // @TODO: decide how to use deadline for the retries with different leaders... exponential backoff until a threshold of 1 second for example.
         JsonObject obj = JsonParser.parseString(new_ride).getAsJsonObject();
         return Ride.deserialize(obj);
     }
 
-    public void addRideFollower(Ride msg) {
-        ride request = getRideRequest(msg);
-
-        asyncStub.addRideFollower(request, new StreamObserver<response>() {
-            @Override
-            public void onNext(response value) {
-
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                System.out.println(t.toString());
-            }
-
-            @Override
-            public void onCompleted() {
-
-            }
-        });
-
-    }
-
-    private ride getRideRequest(Ride msg) {
-        return ride.newBuilder()
-                .setFirstName(msg.getFirstName())
-                .setLastName(msg.getLastName())
-                .setPhone(msg.getPhone())
-                .setStartPosition(msg.getStartPosition().getName())
-                .setEndPosition(msg.getEndPosition().getName())
-                .setDepartureTime(msg.getDepartureTime())
-                .setVacancies(msg.getVacancies())
-                .setPd(msg.getPd())
-                .build();
-    }
 
     public void getRidesAsync(List<Ride> append_list, CountDownLatch latch) {
-        asyncStub.getRidesAsync(EMPTY_MESSAGE, new StreamObserver<response>() {
+        asyncStub.getRidesAsync(EMPTY_MESSAGE, new StreamObserver<Response>() {
             @Override
-            public void onNext(response value) {
+            public void onNext(Response value) {
                 synchronized (append_list) {
                     JsonObject jsonObject = JsonParser.parseString(value.getMsg()).getAsJsonObject();
                     append_list.add(Ride.deserialize(jsonObject));
@@ -109,18 +65,36 @@ public class sscClient {
         });
     }
 
-    public Ride reserveRideLeader(Reservation msg) {
-        reservation request = getReservationRequest(msg);
-        return new Ride(blockingStub.withDeadlineAfter(3, TimeUnit.SECONDS).reserveRideLeader(request));
-    }
+    public Ride blockingReserveRide(reservation reservation) {
+        final Ride[] reserved_ride = new Ride[1];
+        reserved_ride[0] = Ride.nullRide();
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        StreamObserver<reservation> request_stream = asyncStub.reserveRides(new StreamObserver<ride>() {
+            @Override
+            public void onNext(ride value) {
+                reserved_ride[0] = new Ride(value);
+            }
 
-    private reservation getReservationRequest(Reservation msg) {
-        return reservation.newBuilder()
-                .setFirstName(msg.getFirstName())
-                .setLastName(msg.getLastName())
-                .setDepartureTime(msg.getDepartureTime())
-                .setPath(String.join(",", msg.getPath()))
-                .build();
+            @Override
+            public void onError(Throwable t) {
+                countDownLatch.countDown();
+            }
 
+            @Override
+            public void onCompleted() {
+                countDownLatch.countDown();
+            }
+        });
+
+        try {
+            // send reserve request
+            request_stream.onNext(reservation);
+            // wait for reservation
+            countDownLatch.await();
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return reserved_ride[0];
     }
 }

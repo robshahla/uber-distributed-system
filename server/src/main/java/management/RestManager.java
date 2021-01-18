@@ -1,5 +1,7 @@
 package management;
 
+import entities.City;
+import entities.Reservation;
 import entities.Ride;
 import entities.Server;
 import grpc.sscClient;
@@ -32,6 +34,17 @@ public class RestManager {
         logger.log(Level.WARNING, "Got this after connecting");
         // @TODO: add retry for a couple of times in case the leader failed while broadcasting - we want to send this to the new leader
         return grpc_client.addRideLeader(ride).toString();
+    }
+
+    public static String reserveRide(Reservation reservation) {
+        final List<String> path = reservation.getPath();
+        assert path.size() >= 2;
+
+        if (path.size() == 2) {
+            return reserveOneRide(reservation);
+        } else {
+            return reservePath(reservation);
+        }
     }
 
     /**
@@ -82,5 +95,41 @@ public class RestManager {
         });
         logger.log(Level.FINE, "Finished getting rides, total of " + all_rides.size() + " ride(s)");
         return stringBuilder.toString();
+    }
+
+
+    private static String reserveOneRide(Reservation reservation) {
+        synchronized (ServerManager.getInstance()) {
+            ServerManager serverManager = ServerManager.getInstance();
+            City start_city = serverManager.getCity(reservation.getPath().get(0));
+            Set<Server> leaders = new HashSet<>(serverManager.getSystemShards().values());
+            //TODO maybe sort?
+
+            // send reserve request to each leader
+            Ride reserved_ride = Ride.nullRide();
+            for (Server leader : leaders) {
+                if (leader.getName().equals(serverManager.getServer().getName())) {
+                    reserved_ride = serverManager.reserveOneRideIfAvailableAndBroadCast(reservation);
+                } else {
+                    sscClient grpc_client = leader.getGrpcClient();
+                    reserved_ride = grpc_client.blockingReserveRide(reservation.getReservationForGRPC());
+                }
+                if (!reserved_ride.isNull()) {
+                    break;
+                }
+            }
+            if (reserved_ride.isNull()) {
+                return "No available ride found!";
+            }
+            return reserved_ride.toString();
+        }
+    }
+
+    private static String reservePath(Reservation reservation) {
+        // global lock
+        synchronized (ServerManager.getInstance()) {
+
+            return "";
+        }
     }
 }

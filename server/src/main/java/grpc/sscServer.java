@@ -21,7 +21,7 @@ public class sscServer {
 
     public sscServer(ServerBuilder<?> serverBuilder, int port) {
         this.port = port;
-        server = serverBuilder.addService(new sscService(port))
+        server = serverBuilder.addService(new sscService())
                 .build();
 
     }

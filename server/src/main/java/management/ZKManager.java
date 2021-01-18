@@ -8,40 +8,39 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static management.MessagesManager.ProcessMessage;
 
 
 public class ZKManager {
     private final CountDownLatch connectedSignal = new CountDownLatch(1);
+    private final Map<String, CountDownLatch> latchMap;
     private static MessagesManager logger = MessagesManager.instance;
-    private static final int SESSION_TIME_OUT = 3000;
+    private static final int SESSION_TIME_OUT = 300;
     private ZooKeeper zooKeeper;
     private final String host_addr;
     private boolean isConnected = false;
 
 
     public ZKManager(String address) {
+        latchMap = new HashMap<>();
         host_addr = address;
         zooKeeper = null;
     }
 
-    public boolean connectToMailbox() {
+    public void connectToMailbox() {
         String server_name = ServerManager.getInstance().getServer().getName();
         String server_mailbox_path = Paths.get(ZKPaths.MESSAGES, server_name).toString();
         logger.log(Level.FINER, "Connecting [" + server_name + "] to MailBox");
-        if (createZNode(server_mailbox_path, CreateMode.PERSISTENT) == null) return false;
+        if (createZNode(server_mailbox_path, CreateMode.PERSISTENT) == null) return;
         addPersistentZNodeWatch(server_mailbox_path, message_received_watch);
         logger.log(Level.FINER, "Server [" + server_name + "] connected to mailbox!");
-        return true;
     }
+
 
     public boolean connect() {
         try {
@@ -75,6 +74,52 @@ public class ZKManager {
         return false;
     }
 
+
+    public synchronized void releaseLock(String lock_name){
+        deleteZNode(lock_name);
+    }
+    public synchronized String lock() {
+        logger.log(Level.FINER, "Acquiring lock...");
+        ServerManager sm = ServerManager.getInstance();
+        final String path_to_lock = Paths.get(ZKPaths.GLOCK,
+                sm.getServer().getName() + "-").toString();
+        final String created_lock_name = createZNode(path_to_lock,
+                CreateMode.EPHEMERAL_SEQUENTIAL);
+        final int my_seq_number = getSequentialNumber(created_lock_name);
+        try {
+            while (true) {
+                final List<String> childs = zooKeeper.getChildren(ZKPaths.GLOCK, false);
+                Optional<String> max = childs.stream().filter(child ->
+                        getSequentialNumber(child) < my_seq_number
+                ).max((str1, str2) -> {
+                    int id1 = getSequentialNumber(str1);
+                    int id2 = getSequentialNumber(str2);
+                    return id1 - id2;
+                });
+                if (max.isEmpty()) {
+                    logger.log(Level.FINER, "Lock acquired!");
+                    return created_lock_name;
+                }
+                CountDownLatch countDownLatch = new CountDownLatch(1);
+                String min_child_path = Paths.get(ZKPaths.GLOCK, max.get()).toString();
+                Stat exists = zooKeeper.exists(min_child_path, event -> {
+                    if (event.getType() == Watcher.Event.EventType.NodeDeleted) {
+                        countDownLatch.countDown();
+                    }
+                });
+                if (exists == null) {
+                    continue;
+                }
+                logger.log(Level.FINER, "Waiting for lock to open");
+                countDownLatch.await(); //TODO add timeout
+            }
+        } catch (KeeperException | InterruptedException e) {
+            e.printStackTrace();
+        }
+        logger.log(Level.FINER, "Failed to get lock....");
+        return null;
+
+    }
 
     public int generateUniqueId() {
         String path = ZKPaths.COUNTER;
@@ -256,6 +301,7 @@ public class ZKManager {
         public static final String ACTIVE = Paths.get(ROOT, "active").toString();
         public static final String MESSAGES = Paths.get(ROOT, "mailbox").toString();
         public static final String COUNTER = Paths.get(ROOT, "id-generator").toString();
+        public static final String GLOCK = Paths.get(ROOT, "G-Lock").toString();
     }
 
 

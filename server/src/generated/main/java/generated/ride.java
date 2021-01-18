@@ -22,6 +22,7 @@ private static final long serialVersionUID = 0L;
     startPosition_ = "";
     endPosition_ = "";
     departureTime_ = "";
+    reservations_ = java.util.Collections.emptyList();
   }
 
   @java.lang.Override
@@ -44,6 +45,7 @@ private static final long serialVersionUID = 0L;
     if (extensionRegistry == null) {
       throw new java.lang.NullPointerException();
     }
+    int mutable_bitField0_ = 0;
     com.google.protobuf.UnknownFieldSet.Builder unknownFields =
         com.google.protobuf.UnknownFieldSet.newBuilder();
     try {
@@ -100,6 +102,20 @@ private static final long serialVersionUID = 0L;
             pd_ = input.readDouble();
             break;
           }
+          case 74: {
+            if (!((mutable_bitField0_ & 0x00000001) != 0)) {
+              reservations_ = new java.util.ArrayList<generated.reservation>();
+              mutable_bitField0_ |= 0x00000001;
+            }
+            reservations_.add(
+                input.readMessage(generated.reservation.parser(), extensionRegistry));
+            break;
+          }
+          case 80: {
+
+            id_ = input.readInt32();
+            break;
+          }
           default: {
             if (!parseUnknownField(
                 input, unknownFields, extensionRegistry, tag)) {
@@ -115,6 +131,9 @@ private static final long serialVersionUID = 0L;
       throw new com.google.protobuf.InvalidProtocolBufferException(
           e).setUnfinishedMessage(this);
     } finally {
+      if (((mutable_bitField0_ & 0x00000001) != 0)) {
+        reservations_ = java.util.Collections.unmodifiableList(reservations_);
+      }
       this.unknownFields = unknownFields.build();
       makeExtensionsImmutable();
     }
@@ -390,6 +409,57 @@ private static final long serialVersionUID = 0L;
     return pd_;
   }
 
+  public static final int RESERVATIONS_FIELD_NUMBER = 9;
+  private java.util.List<generated.reservation> reservations_;
+  /**
+   * <code>repeated .ssc.reservation reservations = 9;</code>
+   */
+  @java.lang.Override
+  public java.util.List<generated.reservation> getReservationsList() {
+    return reservations_;
+  }
+  /**
+   * <code>repeated .ssc.reservation reservations = 9;</code>
+   */
+  @java.lang.Override
+  public java.util.List<? extends generated.reservationOrBuilder> 
+      getReservationsOrBuilderList() {
+    return reservations_;
+  }
+  /**
+   * <code>repeated .ssc.reservation reservations = 9;</code>
+   */
+  @java.lang.Override
+  public int getReservationsCount() {
+    return reservations_.size();
+  }
+  /**
+   * <code>repeated .ssc.reservation reservations = 9;</code>
+   */
+  @java.lang.Override
+  public generated.reservation getReservations(int index) {
+    return reservations_.get(index);
+  }
+  /**
+   * <code>repeated .ssc.reservation reservations = 9;</code>
+   */
+  @java.lang.Override
+  public generated.reservationOrBuilder getReservationsOrBuilder(
+      int index) {
+    return reservations_.get(index);
+  }
+
+  public static final int ID_FIELD_NUMBER = 10;
+  private int id_;
+  /**
+   * <code>int32 id = 10;</code>
+   * @return The id.
+   */
+  @java.lang.Override
+  public int getId() {
+    return id_;
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -428,6 +498,12 @@ private static final long serialVersionUID = 0L;
     if (pd_ != 0D) {
       output.writeDouble(8, pd_);
     }
+    for (int i = 0; i < reservations_.size(); i++) {
+      output.writeMessage(9, reservations_.get(i));
+    }
+    if (id_ != 0) {
+      output.writeInt32(10, id_);
+    }
     unknownFields.writeTo(output);
   }
 
@@ -463,6 +539,14 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeDoubleSize(8, pd_);
     }
+    for (int i = 0; i < reservations_.size(); i++) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(9, reservations_.get(i));
+    }
+    if (id_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(10, id_);
+    }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
     return size;
@@ -495,6 +579,10 @@ private static final long serialVersionUID = 0L;
     if (java.lang.Double.doubleToLongBits(getPd())
         != java.lang.Double.doubleToLongBits(
             other.getPd())) return false;
+    if (!getReservationsList()
+        .equals(other.getReservationsList())) return false;
+    if (getId()
+        != other.getId()) return false;
     if (!unknownFields.equals(other.unknownFields)) return false;
     return true;
   }
@@ -523,6 +611,12 @@ private static final long serialVersionUID = 0L;
     hash = (37 * hash) + PD_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
         java.lang.Double.doubleToLongBits(getPd()));
+    if (getReservationsCount() > 0) {
+      hash = (37 * hash) + RESERVATIONS_FIELD_NUMBER;
+      hash = (53 * hash) + getReservationsList().hashCode();
+    }
+    hash = (37 * hash) + ID_FIELD_NUMBER;
+    hash = (53 * hash) + getId();
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -651,6 +745,7 @@ private static final long serialVersionUID = 0L;
     private void maybeForceBuilderInitialization() {
       if (com.google.protobuf.GeneratedMessageV3
               .alwaysUseFieldBuilders) {
+        getReservationsFieldBuilder();
       }
     }
     @java.lang.Override
@@ -671,6 +766,14 @@ private static final long serialVersionUID = 0L;
       vacancies_ = 0;
 
       pd_ = 0D;
+
+      if (reservationsBuilder_ == null) {
+        reservations_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000001);
+      } else {
+        reservationsBuilder_.clear();
+      }
+      id_ = 0;
 
       return this;
     }
@@ -698,6 +801,7 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public generated.ride buildPartial() {
       generated.ride result = new generated.ride(this);
+      int from_bitField0_ = bitField0_;
       result.firstName_ = firstName_;
       result.lastName_ = lastName_;
       result.phone_ = phone_;
@@ -706,6 +810,16 @@ private static final long serialVersionUID = 0L;
       result.departureTime_ = departureTime_;
       result.vacancies_ = vacancies_;
       result.pd_ = pd_;
+      if (reservationsBuilder_ == null) {
+        if (((bitField0_ & 0x00000001) != 0)) {
+          reservations_ = java.util.Collections.unmodifiableList(reservations_);
+          bitField0_ = (bitField0_ & ~0x00000001);
+        }
+        result.reservations_ = reservations_;
+      } else {
+        result.reservations_ = reservationsBuilder_.build();
+      }
+      result.id_ = id_;
       onBuilt();
       return result;
     }
@@ -784,6 +898,35 @@ private static final long serialVersionUID = 0L;
       if (other.getPd() != 0D) {
         setPd(other.getPd());
       }
+      if (reservationsBuilder_ == null) {
+        if (!other.reservations_.isEmpty()) {
+          if (reservations_.isEmpty()) {
+            reservations_ = other.reservations_;
+            bitField0_ = (bitField0_ & ~0x00000001);
+          } else {
+            ensureReservationsIsMutable();
+            reservations_.addAll(other.reservations_);
+          }
+          onChanged();
+        }
+      } else {
+        if (!other.reservations_.isEmpty()) {
+          if (reservationsBuilder_.isEmpty()) {
+            reservationsBuilder_.dispose();
+            reservationsBuilder_ = null;
+            reservations_ = other.reservations_;
+            bitField0_ = (bitField0_ & ~0x00000001);
+            reservationsBuilder_ = 
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                 getReservationsFieldBuilder() : null;
+          } else {
+            reservationsBuilder_.addAllMessages(other.reservations_);
+          }
+        }
+      }
+      if (other.getId() != 0) {
+        setId(other.getId());
+      }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
       return this;
@@ -812,6 +955,7 @@ private static final long serialVersionUID = 0L;
       }
       return this;
     }
+    private int bitField0_;
 
     private java.lang.Object firstName_ = "";
     /**
@@ -1347,6 +1491,277 @@ private static final long serialVersionUID = 0L;
     public Builder clearPd() {
       
       pd_ = 0D;
+      onChanged();
+      return this;
+    }
+
+    private java.util.List<generated.reservation> reservations_ =
+      java.util.Collections.emptyList();
+    private void ensureReservationsIsMutable() {
+      if (!((bitField0_ & 0x00000001) != 0)) {
+        reservations_ = new java.util.ArrayList<generated.reservation>(reservations_);
+        bitField0_ |= 0x00000001;
+       }
+    }
+
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        generated.reservation, generated.reservation.Builder, generated.reservationOrBuilder> reservationsBuilder_;
+
+    /**
+     * <code>repeated .ssc.reservation reservations = 9;</code>
+     */
+    public java.util.List<generated.reservation> getReservationsList() {
+      if (reservationsBuilder_ == null) {
+        return java.util.Collections.unmodifiableList(reservations_);
+      } else {
+        return reservationsBuilder_.getMessageList();
+      }
+    }
+    /**
+     * <code>repeated .ssc.reservation reservations = 9;</code>
+     */
+    public int getReservationsCount() {
+      if (reservationsBuilder_ == null) {
+        return reservations_.size();
+      } else {
+        return reservationsBuilder_.getCount();
+      }
+    }
+    /**
+     * <code>repeated .ssc.reservation reservations = 9;</code>
+     */
+    public generated.reservation getReservations(int index) {
+      if (reservationsBuilder_ == null) {
+        return reservations_.get(index);
+      } else {
+        return reservationsBuilder_.getMessage(index);
+      }
+    }
+    /**
+     * <code>repeated .ssc.reservation reservations = 9;</code>
+     */
+    public Builder setReservations(
+        int index, generated.reservation value) {
+      if (reservationsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureReservationsIsMutable();
+        reservations_.set(index, value);
+        onChanged();
+      } else {
+        reservationsBuilder_.setMessage(index, value);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ssc.reservation reservations = 9;</code>
+     */
+    public Builder setReservations(
+        int index, generated.reservation.Builder builderForValue) {
+      if (reservationsBuilder_ == null) {
+        ensureReservationsIsMutable();
+        reservations_.set(index, builderForValue.build());
+        onChanged();
+      } else {
+        reservationsBuilder_.setMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ssc.reservation reservations = 9;</code>
+     */
+    public Builder addReservations(generated.reservation value) {
+      if (reservationsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureReservationsIsMutable();
+        reservations_.add(value);
+        onChanged();
+      } else {
+        reservationsBuilder_.addMessage(value);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ssc.reservation reservations = 9;</code>
+     */
+    public Builder addReservations(
+        int index, generated.reservation value) {
+      if (reservationsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureReservationsIsMutable();
+        reservations_.add(index, value);
+        onChanged();
+      } else {
+        reservationsBuilder_.addMessage(index, value);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ssc.reservation reservations = 9;</code>
+     */
+    public Builder addReservations(
+        generated.reservation.Builder builderForValue) {
+      if (reservationsBuilder_ == null) {
+        ensureReservationsIsMutable();
+        reservations_.add(builderForValue.build());
+        onChanged();
+      } else {
+        reservationsBuilder_.addMessage(builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ssc.reservation reservations = 9;</code>
+     */
+    public Builder addReservations(
+        int index, generated.reservation.Builder builderForValue) {
+      if (reservationsBuilder_ == null) {
+        ensureReservationsIsMutable();
+        reservations_.add(index, builderForValue.build());
+        onChanged();
+      } else {
+        reservationsBuilder_.addMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ssc.reservation reservations = 9;</code>
+     */
+    public Builder addAllReservations(
+        java.lang.Iterable<? extends generated.reservation> values) {
+      if (reservationsBuilder_ == null) {
+        ensureReservationsIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, reservations_);
+        onChanged();
+      } else {
+        reservationsBuilder_.addAllMessages(values);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ssc.reservation reservations = 9;</code>
+     */
+    public Builder clearReservations() {
+      if (reservationsBuilder_ == null) {
+        reservations_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+      } else {
+        reservationsBuilder_.clear();
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ssc.reservation reservations = 9;</code>
+     */
+    public Builder removeReservations(int index) {
+      if (reservationsBuilder_ == null) {
+        ensureReservationsIsMutable();
+        reservations_.remove(index);
+        onChanged();
+      } else {
+        reservationsBuilder_.remove(index);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ssc.reservation reservations = 9;</code>
+     */
+    public generated.reservation.Builder getReservationsBuilder(
+        int index) {
+      return getReservationsFieldBuilder().getBuilder(index);
+    }
+    /**
+     * <code>repeated .ssc.reservation reservations = 9;</code>
+     */
+    public generated.reservationOrBuilder getReservationsOrBuilder(
+        int index) {
+      if (reservationsBuilder_ == null) {
+        return reservations_.get(index);  } else {
+        return reservationsBuilder_.getMessageOrBuilder(index);
+      }
+    }
+    /**
+     * <code>repeated .ssc.reservation reservations = 9;</code>
+     */
+    public java.util.List<? extends generated.reservationOrBuilder> 
+         getReservationsOrBuilderList() {
+      if (reservationsBuilder_ != null) {
+        return reservationsBuilder_.getMessageOrBuilderList();
+      } else {
+        return java.util.Collections.unmodifiableList(reservations_);
+      }
+    }
+    /**
+     * <code>repeated .ssc.reservation reservations = 9;</code>
+     */
+    public generated.reservation.Builder addReservationsBuilder() {
+      return getReservationsFieldBuilder().addBuilder(
+          generated.reservation.getDefaultInstance());
+    }
+    /**
+     * <code>repeated .ssc.reservation reservations = 9;</code>
+     */
+    public generated.reservation.Builder addReservationsBuilder(
+        int index) {
+      return getReservationsFieldBuilder().addBuilder(
+          index, generated.reservation.getDefaultInstance());
+    }
+    /**
+     * <code>repeated .ssc.reservation reservations = 9;</code>
+     */
+    public java.util.List<generated.reservation.Builder> 
+         getReservationsBuilderList() {
+      return getReservationsFieldBuilder().getBuilderList();
+    }
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        generated.reservation, generated.reservation.Builder, generated.reservationOrBuilder> 
+        getReservationsFieldBuilder() {
+      if (reservationsBuilder_ == null) {
+        reservationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+            generated.reservation, generated.reservation.Builder, generated.reservationOrBuilder>(
+                reservations_,
+                ((bitField0_ & 0x00000001) != 0),
+                getParentForChildren(),
+                isClean());
+        reservations_ = null;
+      }
+      return reservationsBuilder_;
+    }
+
+    private int id_ ;
+    /**
+     * <code>int32 id = 10;</code>
+     * @return The id.
+     */
+    @java.lang.Override
+    public int getId() {
+      return id_;
+    }
+    /**
+     * <code>int32 id = 10;</code>
+     * @param value The id to set.
+     * @return This builder for chaining.
+     */
+    public Builder setId(int value) {
+      
+      id_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 id = 10;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearId() {
+      
+      id_ = 0;
       onChanged();
       return this;
     }

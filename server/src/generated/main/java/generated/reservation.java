@@ -19,7 +19,7 @@ private static final long serialVersionUID = 0L;
     firstName_ = "";
     lastName_ = "";
     departureTime_ = "";
-    path_ = "";
+    path_ = com.google.protobuf.LazyStringArrayList.EMPTY;
   }
 
   @java.lang.Override
@@ -42,6 +42,7 @@ private static final long serialVersionUID = 0L;
     if (extensionRegistry == null) {
       throw new java.lang.NullPointerException();
     }
+    int mutable_bitField0_ = 0;
     com.google.protobuf.UnknownFieldSet.Builder unknownFields =
         com.google.protobuf.UnknownFieldSet.newBuilder();
     try {
@@ -72,8 +73,11 @@ private static final long serialVersionUID = 0L;
           }
           case 34: {
             java.lang.String s = input.readStringRequireUtf8();
-
-            path_ = s;
+            if (!((mutable_bitField0_ & 0x00000001) != 0)) {
+              path_ = new com.google.protobuf.LazyStringArrayList();
+              mutable_bitField0_ |= 0x00000001;
+            }
+            path_.add(s);
             break;
           }
           default: {
@@ -91,6 +95,9 @@ private static final long serialVersionUID = 0L;
       throw new com.google.protobuf.InvalidProtocolBufferException(
           e).setUnfinishedMessage(this);
     } finally {
+      if (((mutable_bitField0_ & 0x00000001) != 0)) {
+        path_ = path_.getUnmodifiableView();
+      }
       this.unknownFields = unknownFields.build();
       makeExtensionsImmutable();
     }
@@ -223,41 +230,38 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int PATH_FIELD_NUMBER = 4;
-  private volatile java.lang.Object path_;
+  private com.google.protobuf.LazyStringList path_;
   /**
-   * <code>string path = 4;</code>
-   * @return The path.
+   * <code>repeated string path = 4;</code>
+   * @return A list containing the path.
    */
-  @java.lang.Override
-  public java.lang.String getPath() {
-    java.lang.Object ref = path_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      path_ = s;
-      return s;
-    }
+  public com.google.protobuf.ProtocolStringList
+      getPathList() {
+    return path_;
   }
   /**
-   * <code>string path = 4;</code>
-   * @return The bytes for path.
+   * <code>repeated string path = 4;</code>
+   * @return The count of path.
    */
-  @java.lang.Override
+  public int getPathCount() {
+    return path_.size();
+  }
+  /**
+   * <code>repeated string path = 4;</code>
+   * @param index The index of the element to return.
+   * @return The path at the given index.
+   */
+  public java.lang.String getPath(int index) {
+    return path_.get(index);
+  }
+  /**
+   * <code>repeated string path = 4;</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the path at the given index.
+   */
   public com.google.protobuf.ByteString
-      getPathBytes() {
-    java.lang.Object ref = path_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      path_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
+      getPathBytes(int index) {
+    return path_.getByteString(index);
   }
 
   private byte memoizedIsInitialized = -1;
@@ -283,8 +287,8 @@ private static final long serialVersionUID = 0L;
     if (!getDepartureTimeBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 3, departureTime_);
     }
-    if (!getPathBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 4, path_);
+    for (int i = 0; i < path_.size(); i++) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 4, path_.getRaw(i));
     }
     unknownFields.writeTo(output);
   }
@@ -304,8 +308,13 @@ private static final long serialVersionUID = 0L;
     if (!getDepartureTimeBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, departureTime_);
     }
-    if (!getPathBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, path_);
+    {
+      int dataSize = 0;
+      for (int i = 0; i < path_.size(); i++) {
+        dataSize += computeStringSizeNoTag(path_.getRaw(i));
+      }
+      size += dataSize;
+      size += 1 * getPathList().size();
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -328,8 +337,8 @@ private static final long serialVersionUID = 0L;
         .equals(other.getLastName())) return false;
     if (!getDepartureTime()
         .equals(other.getDepartureTime())) return false;
-    if (!getPath()
-        .equals(other.getPath())) return false;
+    if (!getPathList()
+        .equals(other.getPathList())) return false;
     if (!unknownFields.equals(other.unknownFields)) return false;
     return true;
   }
@@ -347,8 +356,10 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getLastName().hashCode();
     hash = (37 * hash) + DEPARTURE_TIME_FIELD_NUMBER;
     hash = (53 * hash) + getDepartureTime().hashCode();
-    hash = (37 * hash) + PATH_FIELD_NUMBER;
-    hash = (53 * hash) + getPath().hashCode();
+    if (getPathCount() > 0) {
+      hash = (37 * hash) + PATH_FIELD_NUMBER;
+      hash = (53 * hash) + getPathList().hashCode();
+    }
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -488,8 +499,8 @@ private static final long serialVersionUID = 0L;
 
       departureTime_ = "";
 
-      path_ = "";
-
+      path_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      bitField0_ = (bitField0_ & ~0x00000001);
       return this;
     }
 
@@ -516,9 +527,14 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public generated.reservation buildPartial() {
       generated.reservation result = new generated.reservation(this);
+      int from_bitField0_ = bitField0_;
       result.firstName_ = firstName_;
       result.lastName_ = lastName_;
       result.departureTime_ = departureTime_;
+      if (((bitField0_ & 0x00000001) != 0)) {
+        path_ = path_.getUnmodifiableView();
+        bitField0_ = (bitField0_ & ~0x00000001);
+      }
       result.path_ = path_;
       onBuilt();
       return result;
@@ -580,8 +596,14 @@ private static final long serialVersionUID = 0L;
         departureTime_ = other.departureTime_;
         onChanged();
       }
-      if (!other.getPath().isEmpty()) {
-        path_ = other.path_;
+      if (!other.path_.isEmpty()) {
+        if (path_.isEmpty()) {
+          path_ = other.path_;
+          bitField0_ = (bitField0_ & ~0x00000001);
+        } else {
+          ensurePathIsMutable();
+          path_.addAll(other.path_);
+        }
         onChanged();
       }
       this.mergeUnknownFields(other.unknownFields);
@@ -612,6 +634,7 @@ private static final long serialVersionUID = 0L;
       }
       return this;
     }
+    private int bitField0_;
 
     private java.lang.Object firstName_ = "";
     /**
@@ -841,78 +864,112 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private java.lang.Object path_ = "";
-    /**
-     * <code>string path = 4;</code>
-     * @return The path.
-     */
-    public java.lang.String getPath() {
-      java.lang.Object ref = path_;
-      if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        path_ = s;
-        return s;
-      } else {
-        return (java.lang.String) ref;
-      }
+    private com.google.protobuf.LazyStringList path_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+    private void ensurePathIsMutable() {
+      if (!((bitField0_ & 0x00000001) != 0)) {
+        path_ = new com.google.protobuf.LazyStringArrayList(path_);
+        bitField0_ |= 0x00000001;
+       }
     }
     /**
-     * <code>string path = 4;</code>
-     * @return The bytes for path.
+     * <code>repeated string path = 4;</code>
+     * @return A list containing the path.
+     */
+    public com.google.protobuf.ProtocolStringList
+        getPathList() {
+      return path_.getUnmodifiableView();
+    }
+    /**
+     * <code>repeated string path = 4;</code>
+     * @return The count of path.
+     */
+    public int getPathCount() {
+      return path_.size();
+    }
+    /**
+     * <code>repeated string path = 4;</code>
+     * @param index The index of the element to return.
+     * @return The path at the given index.
+     */
+    public java.lang.String getPath(int index) {
+      return path_.get(index);
+    }
+    /**
+     * <code>repeated string path = 4;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the path at the given index.
      */
     public com.google.protobuf.ByteString
-        getPathBytes() {
-      java.lang.Object ref = path_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        path_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
+        getPathBytes(int index) {
+      return path_.getByteString(index);
     }
     /**
-     * <code>string path = 4;</code>
+     * <code>repeated string path = 4;</code>
+     * @param index The index to set the value at.
      * @param value The path to set.
      * @return This builder for chaining.
      */
     public Builder setPath(
+        int index, java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  ensurePathIsMutable();
+      path_.set(index, value);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string path = 4;</code>
+     * @param value The path to add.
+     * @return This builder for chaining.
+     */
+    public Builder addPath(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  
-      path_ = value;
+  ensurePathIsMutable();
+      path_.add(value);
       onChanged();
       return this;
     }
     /**
-     * <code>string path = 4;</code>
+     * <code>repeated string path = 4;</code>
+     * @param values The path to add.
+     * @return This builder for chaining.
+     */
+    public Builder addAllPath(
+        java.lang.Iterable<java.lang.String> values) {
+      ensurePathIsMutable();
+      com.google.protobuf.AbstractMessageLite.Builder.addAll(
+          values, path_);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string path = 4;</code>
      * @return This builder for chaining.
      */
     public Builder clearPath() {
-      
-      path_ = getDefaultInstance().getPath();
+      path_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      bitField0_ = (bitField0_ & ~0x00000001);
       onChanged();
       return this;
     }
     /**
-     * <code>string path = 4;</code>
-     * @param value The bytes for path to set.
+     * <code>repeated string path = 4;</code>
+     * @param value The bytes of the path to add.
      * @return This builder for chaining.
      */
-    public Builder setPathBytes(
+    public Builder addPathBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
-      path_ = value;
+      ensurePathIsMutable();
+      path_.add(value);
       onChanged();
       return this;
     }

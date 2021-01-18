@@ -7,17 +7,23 @@ option java_package = "generated";
 package ssc;
 
 service  ssc{
-  rpc upsert(ride)  returns (response) {}
-  rpc getRidesAsync(emptyMessage) returns (stream response) {}
-  rpc addRideLeader(ride) returns (response) {}
-  rpc addRideFollower(ride) returns (response) {}
-  rpc reserveRideLeader(reservation) returns (ride) {}
+  rpc getRidesAsync(emptyMessage) returns (stream Response) {}
+  rpc addRideLeader(ride) returns (Response) {}
+  rpc reserveRides(stream reservation) returns (stream ride) {}
 }
 
 message emptyMessage {}
 
-message response {
+
+message Response {
   string msg = 1;
+}
+
+message reservation {
+  string first_name = 1;
+  string last_name = 2;
+  string departure_time = 3;
+  repeated string path = 4;
 }
 
 message ride {
@@ -29,12 +35,7 @@ message ride {
   string departure_time = 6; // (DD/MM/YYYY)
   int32 vacancies = 7;
   double pd = 8;
-}
+  repeated reservation reservations = 9;
+  int32 id = 10;
 
-message reservation {
-  string first_name = 1;
-  string last_name = 2;
-  string departure_time = 3;
-  string path = 4;
 }
-

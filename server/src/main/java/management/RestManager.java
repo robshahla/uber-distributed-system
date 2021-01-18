@@ -54,11 +54,11 @@ public class RestManager {
         final String this_server_name = sm.getServer().getName();
         Map<String, Server> system_shards = sm.getSystemShards();
         final int shards_n = system_shards.size();
-        CountDownLatch latch = new CountDownLatch(shards_n);
         logger.log(Level.INFO, "Snapshot request, getting rides from shards leaders, shards_n = " + shards_n);
         logger.log(Level.INFO, "Calling server: " + this_server_name);
         List<Ride> all_rides = new ArrayList<>();
         Set<Server> servers_to_add = new HashSet<>(system_shards.values());
+        CountDownLatch latch = new CountDownLatch(servers_to_add.size());
 
         servers_to_add.forEach(server -> {
             assert server != null;
@@ -66,7 +66,7 @@ public class RestManager {
             if (current_server_name.equals(this_server_name)) {
                 logger.log(Level.FINE, "Getting rides from the calling server: " + server.getName());
                 synchronized (all_rides) {
-                    logger.log(Level.FINE, "MNYKE + " + sm.getRides().size());
+                    logger.log(Level.FINE, "MNYKE + " + sm.getRides().size()); //TODO: remove
                     all_rides.addAll(sm.getRides());
                     latch.countDown();
                 }

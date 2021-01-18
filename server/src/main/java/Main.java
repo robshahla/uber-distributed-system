@@ -29,7 +29,7 @@ public class Main {
         String filePath = args[0]; // config file path
         String server_name = args[1];
         logger.log(Level.INFO, "Initializing server: " + server_name);
-        System.out.println("Version: 8");
+        System.out.println("Version: 9");
         if (!sm.init(filePath, server_name)) {
             logger.log(Level.SEVERE, "Could not initialize server: " + server_name);
             return;

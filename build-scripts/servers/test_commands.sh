@@ -49,3 +49,8 @@ curl -X POST -H "Content-Type: application/json" -d '{"first_name": "dwight", "l
 #contains who reserved this ride before, however if don't ask the leader then we don't get this info because
 #we don't add this info when building the protobuf for the ride. (When asking the leader we don't build a protobuf.
 #Do we want to return this info or not? should return the same for both cases
+
+#second commit:
+# kill s1 leaving s2 leader for 2 shards, which are all the shards in the system and then request a snapshot,
+# he will be stuck because he initiates a latch with the nunmber of shards, and waits on it, the latch should,
+# be initiated on the number of servers that I should contact, in this case only 1 since s2 is the only leader...

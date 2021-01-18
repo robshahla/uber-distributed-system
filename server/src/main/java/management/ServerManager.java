@@ -227,7 +227,7 @@ public class ServerManager {
             final City start_city = getCity(start_city_name);
             Ride ride_to_reserve = rides.stream().filter(ride -> isLeaderForRide(ride) &&
                     ride.canPickUpFrom(start_city) &&
-                    ride.getDepartureTime().equals(reservation.getDepartureTime())
+                    ride.getDepartureTime().equals(reservation.getDepartureTime()) //TODO: check also if vacancies > 0
             ).min((ride1, ride2) -> {
                 double d1 = ride1.distanceToLine(start_city);
                 double d2 = ride2.distanceToLine(start_city);
@@ -235,6 +235,7 @@ public class ServerManager {
                 else return d1 - d2 < 0 ? -1 : 1;
             }).orElse(null);
             if (ride_to_reserve == null) {
+                System.out.println("shit, got null ride"); //TODO:remove
                 return Ride.nullRide();
             }
             ride_to_reserve.reserve(reservation.getFirstName() + " " + reservation.getLastName());

@@ -37,7 +37,10 @@ public class ReserveRequestHandler implements StreamObserver<reservation> {
         else if (path_size == 2) {
             Ride reserved_ride = ServerManager.getInstance()
                     .reserveOneRideIfAvailableAndBroadCast(new Reservation(value));
-            responseObserver.onNext(reserved_ride.getRideRequestForGRPC());
+            if (!reserved_ride.isNull()) {
+                System.out.println("I got the request, this is what I found:\n" + reserved_ride.serialize()); //TODO: remove
+                responseObserver.onNext(reserved_ride.getRideRequestForGRPC());
+            }
             responseObserver.onCompleted();
             internal_lock.release();
             return;

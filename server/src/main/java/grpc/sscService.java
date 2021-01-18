@@ -36,6 +36,7 @@ public class sscService extends sscGrpc.sscImplBase {
             newHandler = ReserveRequestHandler.getNewHandler(responseObserver);
         } catch (InterruptedException e) {
             //TODO: catch this focking exception by order of the peaky blinders
+            System.out.println("oops..." + e.getMessage());
         }
         return newHandler;
     }

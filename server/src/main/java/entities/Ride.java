@@ -1,11 +1,15 @@
 package entities;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import generated.ride;
 import management.ServerManager;
+import org.springframework.beans.factory.annotation.Value;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -34,8 +38,15 @@ public class Ride {
         this.reservations = new ArrayList<>();
     }
 
-    public Ride(String first_name, String last_name, String phone, String start_position,
-                String end_position, String departure_time, int vacancies, double pd) {
+    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+    public Ride(@JsonProperty("first_name") String first_name,
+                @JsonProperty("last_name") String last_name,
+                @JsonProperty("phone") String phone,
+                @JsonProperty("start_position") String start_position,
+                @JsonProperty("end_position") String end_position,
+                @JsonProperty("departure_time") String departure_time,
+                @JsonProperty("vacancies") int vacancies,
+                @JsonProperty("pd") double pd) {
         this(first_name, last_name, phone, start_position, end_position, departure_time, vacancies, pd, NULL_ID);
     }
 

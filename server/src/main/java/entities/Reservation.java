@@ -24,14 +24,11 @@ public class Reservation {
     }
 
     public reservation getReservationForGRPC() {
-        reservation.Builder builder = reservation.newBuilder()
+        return reservation.newBuilder()
                 .setDepartureTime(departure_time)
                 .setLastName(last_name)
-                .setFirstName(first_name);
-        for (int i = 0; i < getPath().size(); i++) {
-            builder.setPath(i, getPath().get(i));
-        }
-        return builder.build();
+                .setFirstName(first_name)
+                .addAllPath(getPath()).build();
     }
 
     public List<String> getPath() {

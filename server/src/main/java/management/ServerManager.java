@@ -101,6 +101,7 @@ public class ServerManager {
             double y = Double.parseDouble(city_info.get("Y").toString());
             String shard = city_info.get("shard").toString();
             City city = new City(city_name, x, y, shard);
+            logger.log(Level.CONFIG, "Adding City: " + city.toString());
             cities.add(city);
         });
 
@@ -163,6 +164,7 @@ public class ServerManager {
         assert ride != null && ride.getVacancies() > 0;
         assert getServer().getName().equals(getLeader(ride.getStartPosition().getName()).getName());
         Ride result_ride = addRide(ride);
+        System.out.println("result_ride:" + result_ride);
         if (result_ride.getId() < 0) {
             result_ride.setId(zk.generateUniqueId());
             Set<Server> followers = getCityFollowers(result_ride.getStartPosition());
@@ -181,7 +183,9 @@ public class ServerManager {
     public Ride addRide(Ride ride) {
         synchronized (rides) {
             Ride existing_ride = this.rides.stream().filter(ride::equals).findAny().orElse(Ride.nullRide());
+            System.out.println("Existing ride: " + existing_ride);
             if (existing_ride.isNull()) {
+                System.out.println("Exisiting ride is null :)");
                 rides.add(ride);
                 return this.rides.stream().filter(ride::equals).findAny().orElse(null);
             }
@@ -293,7 +297,12 @@ public class ServerManager {
     }
 
     public City getCity(String city_name) {
-        return cities.stream().filter(city -> city.getName().equals(city_name)).findAny().orElse(null);
+        City found_city = cities.stream().filter(city -> city.getName().equals(city_name)).findAny().orElse(null);
+        if (found_city == null) {
+            logger.log(Level.SEVERE, "Could not find city [" + city_name + "]");
+
+        }
+        return found_city;
     }
 
     private Map<String, Object> getJsonMap(String file_path) {

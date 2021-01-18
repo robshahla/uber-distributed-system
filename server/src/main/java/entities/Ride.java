@@ -6,22 +6,22 @@ import com.google.gson.JsonPrimitive;
 import generated.ride;
 import management.ServerManager;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Objects;
 
 import static java.lang.Math.*;
 
-public class Ride implements Serializable {
+public class Ride {
 
     private int id;
-    private String first_name, last_name, phone, start_position, end_position, departure_time;
+    private final String first_name, last_name, phone, start_position, end_position, departure_time;
     int vacancies;
     double pd;
     ArrayList<String> reservations;
+    public static int NULL_ID = Integer.MIN_VALUE;
 
     public Ride(String first_name, String last_name, String phone, String start_position,
-                String end_position, String departure_time, int vacancies, double pd) {
+                String end_position, String departure_time, int vacancies, double pd, int id) {
         this.first_name = first_name;
         this.last_name = last_name;
         this.phone = phone;
@@ -30,9 +30,15 @@ public class Ride implements Serializable {
         this.departure_time = departure_time;
         this.vacancies = vacancies;
         this.pd = pd;
-        this.id = -1;
+        this.id = id;
         this.reservations = new ArrayList<>();
     }
+
+    public Ride(String first_name, String last_name, String phone, String start_position,
+                String end_position, String departure_time, int vacancies, double pd) {
+        this(first_name, last_name, phone, start_position, end_position, departure_time, vacancies, pd, NULL_ID);
+    }
+
 
     public Ride(ride request) {
         this(request.getFirstName(),
@@ -42,15 +48,11 @@ public class Ride implements Serializable {
                 request.getEndPosition(),
                 request.getDepartureTime(),
                 request.getVacancies(),
-                request.getPd());
-    }
-
-    private Ride() {
-        id = Integer.MIN_VALUE;
+                request.getPd(), request.getId());
     }
 
     public boolean isNull() {
-        return id < -1; //TODO maybe < 0?
+        return id < 0; //TODO maybe < 0?
     }
 
     public void setId(int id) {
@@ -244,6 +246,6 @@ public class Ride implements Serializable {
     }
 
     public static Ride nullRide() {
-        return new Ride();
+        return new Ride(ride.newBuilder().setId(Integer.MIN_VALUE).build());
     }
 }

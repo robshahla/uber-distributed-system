@@ -19,6 +19,7 @@ public class RideController {
 
     @PostMapping("/reserveRide")
     String reserveRide(@RequestBody Reservation reservation) {
+        System.out.println("Got reservation:" + reservation);
         return RestManager.reserveRide(reservation);
     }
 

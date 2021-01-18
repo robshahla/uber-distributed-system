@@ -31,7 +31,7 @@ public class City {
 
     @Override
     public String toString() {
-        return "City{" +
+        return "{" +
                 "name='" + name + '\'' +
                 ", x=" + x +
                 ", y=" + y +

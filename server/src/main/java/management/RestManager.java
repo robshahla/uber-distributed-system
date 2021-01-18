@@ -30,8 +30,6 @@ public class RestManager {
             return new_ride.toString(); // think how to return to client... serialize for now
         }
         sscClient grpc_client = leader_server.getGrpcClient();
-        System.out.println("Connecting to server: " + leader_server.getGrpcAddress() + leader_server.getName()); //remove
-        logger.log(Level.WARNING, "Got this after connecting");
         // @TODO: add retry for a couple of times in case the leader failed while broadcasting - we want to send this to the new leader
         return grpc_client.addRideLeader(ride).toString();
     }

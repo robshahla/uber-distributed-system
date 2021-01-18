@@ -20,8 +20,10 @@ public class sscService extends sscGrpc.sscImplBase {
 
     @Override
     public void addRideLeader(ride request, StreamObserver<Response> responseObserver) {
+        System.out.println("Got addRideLeader request ride= " + request);
         ServerManager sm = ServerManager.getInstance();
         Ride ride = new Ride(request);
+        System.out.println("Transformed into Ride " + ride);
         String result = sm.addRideBroadCast(ride).serialize();
         responseObserver.onNext(Response.newBuilder().setMsg(result).build());
         responseObserver.onCompleted();

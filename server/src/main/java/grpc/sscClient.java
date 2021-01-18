@@ -37,6 +37,9 @@ public class sscClient {
 
     public Ride addRideLeader(Ride msg) {
         ride request = msg.getRideRequestForGRPC();
+        System.out.println("Got Ride: " + msg);
+        System.out.println("Transformed to ride: " + request);
+
         String new_ride = blockingStub.withDeadlineAfter(3, TimeUnit.SECONDS).addRideLeader(request).getMsg(); // @TODO: decide how to use deadline for the retries with different leaders... exponential backoff until a threshold of 1 second for example.
         JsonObject obj = JsonParser.parseString(new_ride).getAsJsonObject();
         return Ride.deserialize(obj);

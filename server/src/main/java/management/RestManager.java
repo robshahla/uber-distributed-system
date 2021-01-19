@@ -4,8 +4,10 @@ import entities.City;
 import entities.Reservation;
 import entities.Ride;
 import entities.Server;
+import generated.reservation;
 import grpc.sscClient;
 import io.grpc.stub.StreamObserver;
+import utilities.PathSolver;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -173,8 +175,10 @@ public class RestManager {
             serverManager.releaseGLock(g_lock);
 
             //backtrack
-            List<Ride> rides_to_reserve = new ArrayList<>();// findRidesBackTrack(all_relevant_rides);
-            if (rides_to_reserve.size() == 0) {
+            PathSolver path_solver = new PathSolver(all_relevant_rides, path);
+            List<Ride> rides_to_reserve = path_solver.solve();
+
+            if (rides_to_reserve == null) {
                 relevant_servers.forEach(relevant -> server_observer.get(relevant).onCompleted()); //TODO: should we catch exception?
                 return "No available ride found!\n";
             }

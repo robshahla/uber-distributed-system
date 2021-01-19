@@ -7,9 +7,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import generated.ride;
 import management.ServerManager;
-import org.springframework.beans.factory.annotation.Value;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -22,7 +20,9 @@ public class Ride {
     int vacancies;
     double pd;
     ArrayList<String> reservations;
-    public static int NULL_ID = Integer.MIN_VALUE;
+
+    private static Ride null_ride;
+    private static final int NULL_ID = Integer.MIN_VALUE;
 
     public Ride(String first_name, String last_name, String phone, String start_position,
                 String end_position, String departure_time, int vacancies, double pd, int id) {
@@ -47,7 +47,7 @@ public class Ride {
                 @JsonProperty("departure_time") String departure_time,
                 @JsonProperty("vacancies") int vacancies,
                 @JsonProperty("pd") double pd) {
-        this(first_name, last_name, phone, start_position, end_position, departure_time, vacancies, pd, NULL_ID);
+        this(first_name, last_name, phone, start_position, end_position, departure_time, vacancies, pd, -1);
     }
 
 
@@ -59,14 +59,19 @@ public class Ride {
                 request.getEndPosition(),
                 request.getDepartureTime(),
                 request.getVacancies(),
-                request.getPd(), request.getId());
+                request.getPd(),
+                request.getId());
     }
 
     public boolean isNull() {
-        return id < 0; //TODO maybe < 0?
+        return getId() == null_ride.getId(); //TODO maybe < 0?
     }
 
     public void setId(int id) {
+        if (this == null_ride) return;
+        if (id < 0) {
+            throw new IllegalArgumentException("id should be >= 0");
+        }
         this.id = id;
     }
 
@@ -106,10 +111,15 @@ public class Ride {
         return pd;
     }
 
-    public void reserve(String name) {
+    public boolean reserve(Reservation name) {
         if (reservations.size() < vacancies) {
-            reservations.add(name);
+            String reservation_name = name.getFirstName() +
+                    " " +
+                    name.getLastName();
+            reservations.add(reservation_name);
+            return true;
         }
+        return false;
     }
 
 
@@ -249,7 +259,7 @@ public class Ride {
         double pd = json_object.get(Fields.PERMITTED_DEVIATION).getAsDouble();
         Ride ride = new Ride(firstName, lastName, phone, startPosition, endPosition, departureTime, vacancies, pd);
         JsonArray reservations = json_object.get(Fields.RESERVATIONS).getAsJsonArray();
-        reservations.forEach(reserve -> ride.reserve(reserve.getAsString()));
+        reservations.forEach(reserve -> ride.reservations.add(reserve.getAsString()));
         ride.setId(id);
         return ride;
     }
@@ -269,6 +279,7 @@ public class Ride {
     }
 
     public static Ride nullRide() {
-        return new Ride(ride.newBuilder().setId(Integer.MIN_VALUE).build());
+        if (null_ride == null) null_ride = new Ride(ride.newBuilder().setId(NULL_ID).build());
+        return null_ride;
     }
 }

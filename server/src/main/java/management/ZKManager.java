@@ -163,6 +163,8 @@ public class ZKManager {
     }
 
     //------------------------------------ PRIVATE METHODS -------------------------------------------------
+
+
     private void participateInElections() {
         ServerManager sm = ServerManager.getInstance();
         for (String shard : sm.getSystemShards().keySet()) {
@@ -203,6 +205,7 @@ public class ZKManager {
          */
         try {
             List<String> message_children = zooKeeper.getChildren(event.getPath(), false);
+
             message_children.stream().sorted((str1, str2) -> {
                 int i1 = getSequentialNumber(str1);
                 int i2 = getSequentialNumber(str2);

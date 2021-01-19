@@ -10,12 +10,12 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.util.Pair;
 import rest.host.RestMain;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -55,21 +55,6 @@ public class ServerManager {
      */
     private Server current_server;
 
-    private ServerManager() {
-        cities = new HashSet<>();
-        rides = new ArrayList<>();
-        system_shards = new HashMap<>();
-        primary_shards = new ArrayList<>();
-        system_servers = new HashMap<>();
-    }
-
-    public String gLock() {
-        return zk.lock();
-    }
-
-    public void releaseGLock(String g_lock) {
-        zk.releaseLock(g_lock);
-    }
     public static ServerManager getInstance() {
         if (instance == null) {
             instance = new ServerManager();
@@ -196,58 +181,39 @@ public class ServerManager {
         }
     }
 
-    public void updateRide(Ride ride_to_update) {
-        synchronized (rides) {
-            boolean removed = rides.removeIf(ride -> ride.getId() == ride_to_update.getId());
-            if (removed && !ride_to_update.isNull()) {
-                rides.add(ride_to_update);
-            }
-        }
-
-    }
-
-    private List<Ride> getRidesForCity(String city_name) {
-        City city = getCity(city_name);
-        return rides.stream()
-                .filter(ride -> ride.canPickUpFrom(city))
-                .collect(Collectors.toList());
-    }
-
-    public List<Ride> getRidesForCities(List<String> cities) {
-        synchronized (rides) {
-            List<Ride> available_rides = new ArrayList<>();
-            for (String city_name : cities) {
-                available_rides.addAll(getRidesForCity(city_name));
-            }
-            return available_rides;
-        }
-    }
-
     public Ride reserveOneRideIfAvailableAndBroadCast(Reservation reservation) {
         synchronized (this.rides) {
             assert reservation.getPath().size() == 2;
-            String start_city_name = reservation.getPath().get(0);
-            String end_city_name = reservation.getPath().get(1);
-            final City start_city = getCity(start_city_name);
-            final City end_city = getCity(end_city_name);
+
+            final City start_city = getCity(reservation.getPath().get(0));
+            final City end_city = getCity(reservation.getPath().get(1));
+
+            // Filter rides before reserving,
+            // Get rides that 1) This leader is responsible for their shard
+            //                2) The ride can take the person from/to request path
 
             Ride ride_to_reserve = rides.stream().filter(ride -> isLeaderForRide(ride) &&
-                    (ride.canPickUpFrom(start_city, end_city) || ride.canDropIn(start_city, end_city)) &&
+                    ride.canServe(start_city, end_city) &&
                     ride.getDepartureTime().equals(reservation.getDepartureTime())
             ).min((ride1, ride2) -> {
                 double d1 = ride1.distanceToLine(start_city);
                 double d2 = ride2.distanceToLine(start_city);
                 if (d1 == d2) return 0;
                 else return d1 - d2 < 0 ? -1 : 1;
-            }).orElse(null);
-            if (ride_to_reserve == null) {
-                System.out.println("shit, got null ride"); //TODO:remove
+            }).orElse(Ride.nullRide());
+
+
+            if (ride_to_reserve.isNull()) {
+                logger.log(Level.FINE, "Could not find valid ride for the requested reservation!");
                 return Ride.nullRide();
             }
-            ride_to_reserve.reserve(reservation.getFirstName() + " " + reservation.getLastName());
+
+            boolean reserve_result = ride_to_reserve.reserve(reservation);
+            assert reserve_result;
 
             //getting the followers
             Set<Server> followers = getCityFollowers(ride_to_reserve.getStartPosition());
+            // Build message to broadcast & broadcast
             Map<Server, List<String>> message_map = new HashMap<>();
             String message = MessagesManager.MessageFactory.updateRideBroadCastMessage(ride_to_reserve);
             MessagesManager.MessageFactory.appendMessageToServers(followers, message, message_map);
@@ -256,36 +222,14 @@ public class ServerManager {
         }
     }
 
+    public void updateRide(Ride ride_to_update) {
+        synchronized (rides) {
+            boolean removed = rides.removeIf(ride -> ride.getId() == ride_to_update.getId());
+            if (removed && !ride_to_update.isNull()) {
+                rides.add(ride_to_update);
+            }
+        }
 
-    private boolean isLeaderForRide(Ride ride) {
-        assert ride != null;
-        return system_shards.get(ride.getStartPosition().getShard()).getName().equals(getServer().getName());
-    }
-
-    public synchronized List<Ride> getRides() {
-        return rides.stream().filter(this::isLeaderForRide).collect(Collectors.toList());
-    }
-
-
-    public String getCityShard(String city_name) {
-        City city = cities.stream()
-                .filter(elem -> elem.getName().equals(city_name))
-                .findAny()
-                .orElse(null);
-        assert city != null;
-        return city.getShard();
-    }
-
-    public Server getServer() {
-        return current_server;
-    }
-
-    public Collection<Server> getAliveServers() {
-        return system_servers.values().stream().filter(Server::isAlive).collect(Collectors.toList());
-    }
-
-    public Map<String, Server> getSystemShards() {
-        return system_shards;
     }
 
 
@@ -308,6 +252,9 @@ public class ServerManager {
         }
     }
 
+
+    //------------------------------------ Getters  -------------------------------------------------
+
     public City getCity(String city_name) {
         City found_city = cities.stream().filter(city -> city.getName().equals(city_name)).findAny().orElse(null);
         if (found_city == null) {
@@ -316,6 +263,68 @@ public class ServerManager {
         }
         return found_city;
     }
+
+
+    public List<Ride> getRidesForPath(List<String> path) {
+        synchronized (rides) {
+            List<Pair<String, String>> pairs = new ArrayList<>();
+            for (int i = 0; i < path.size() - 1; i++) {
+                pairs.add(Pair.of(path.get(i), path.get(i + 1)));
+            }
+            List<Ride> available_rides = new ArrayList<>();
+            pairs
+                    .forEach(single_path -> available_rides
+                            .addAll(getRidesForCity(single_path.getFirst(), single_path.getSecond())));
+            return available_rides;
+        }
+    }
+
+    public synchronized List<Ride> getRides() {
+        return rides.stream().filter(this::isLeaderForRide).collect(Collectors.toList());
+    }
+
+
+    public Server getServer() {
+        return current_server;
+    }
+
+    public Collection<Server> getAliveServers() {
+        return system_servers.values().stream().filter(Server::isAlive).collect(Collectors.toList());
+    }
+
+    public Map<String, Server> getSystemShards() {
+        return system_shards;
+    }
+
+
+//------------------------------------ ZooKeeper  -------------------------------------------------
+
+    public synchronized void atomicBroadcast(Map<Server, List<String>> message_map) {
+        zk.atomicBroadCastMessage(message_map);
+    }
+
+    public String gLock() {
+        return zk.lock();
+    }
+
+    public void releaseGLock(String g_lock) {
+        zk.releaseLock(g_lock);
+    }
+
+    //------------------------------------ PRIVATE METHODS -------------------------------------------------
+    private List<Ride> getRidesForCity(String start_city_name, String end_city_name) {
+        City start_city = getCity(start_city_name);
+        City end_city = getCity(end_city_name);
+        return rides.stream()
+                .filter(ride -> ride.canServe(start_city, end_city))
+                .collect(Collectors.toList());
+    }
+
+    private boolean isLeaderForRide(Ride ride) {
+        assert ride != null;
+        return system_shards.get(ride.getStartPosition().getShard()).equals(getServer());
+    }
+
 
     private Map<String, Object> getJsonMap(String file_path) {
         JSONParser jsonParser = new JSONParser();
@@ -335,7 +344,13 @@ public class ServerManager {
         return json_data;
     }
 
-    public synchronized void atomicBroadcast(Map<Server, List<String>> message_map) {
-        zk.atomicBroadCastMessage(message_map);
+    private ServerManager() {
+        cities = new HashSet<>();
+        rides = new ArrayList<>();
+        system_shards = new HashMap<>();
+        primary_shards = new ArrayList<>();
+        system_servers = new HashMap<>();
     }
+
+
 }

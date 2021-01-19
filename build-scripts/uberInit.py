@@ -109,14 +109,15 @@ def run_servers(servers_config: list, zookeeper_container_name: str, servers_num
     time.sleep(2)
 
     # create the containers
-    for server in servers_config:
-        server_name = server.name
-        server_ip = server.ip_address
+    for i in range(len(servers_config)):
+        server_name = servers_config[i].name
+        server_ip = servers_config[i].ip_address
         command = [
             'docker', 'run ',
             '--network', NetworkConfig().subnet_name,
             '--ip', server_ip,
             '--link', zookeeper_container_name + ':' + server_name,
+            '-p', '0.0.0.0:' + str(8081 + i) + ':' + '8080',
             '-d',
             '--name', server_name,
             '-t', f'\"{docker_image_name}\"',

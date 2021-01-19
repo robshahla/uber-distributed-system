@@ -76,10 +76,11 @@ public class ZKManager {
 
 
     public synchronized void releaseLock(String lock_name){
+        logger.log(Level.FINER, "Releasing global lock");
         deleteZNode(lock_name);
     }
     public synchronized String lock() {
-        logger.log(Level.FINER, "Acquiring lock...");
+        logger.log(Level.FINER, "Acquiring global lock...");
         ServerManager sm = ServerManager.getInstance();
         final String path_to_lock = Paths.get(ZKPaths.GLOCK,
                 sm.getServer().getName() + "-").toString();

@@ -1,21 +1,33 @@
 package utilities;
 
 import entities.Ride;
+import management.MessagesManager;
 import management.ServerManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class PathSolver {
 
-    class Variable {
+    private static final MessagesManager logger = MessagesManager.instance;
+
+    static class Variable {
         String start_city, end_city;
         ArrayList<Ride> domain;
         Ride value;
         boolean valid_value;
+
+        public Variable(String start_city, String end_city) {
+            this.start_city = start_city;
+            this.end_city = end_city;
+            this.domain = new ArrayList<>();
+            this.value = Ride.nullRide();
+            this.valid_value = false;
+        }
 
         public ArrayList<Ride> getDomain() {
             return domain;
@@ -67,16 +79,16 @@ public class PathSolver {
 
         // init already_seen_bitmap
         already_seen_bitmap = new HashMap<>();
+        assignment = new ArrayList<>();
+
         rides.forEach(ride -> {
             already_seen_bitmap.put(ride.getId(), false);
         });
-
-        // init assignment array
-        assignment = new ArrayList<Variable>(path.size() -1);
         for (int i = 0; i < path.size() - 1; i++) {
-            assignment.get(i).setStartCity(path.get(i));
-            assignment.get(i).setEndCity(path.get(i + 1));
+            Variable var = new Variable(path.get(i),path.get(i+1));
+            assignment.add(var);
         }
+
         ServerManager sm = ServerManager.getInstance();
         assignment.forEach(var -> {
             var.getDomain().addAll(rides.stream()
@@ -86,24 +98,34 @@ public class PathSolver {
     }
 
     public List<Ride> solve() {
+        logger.log(Level.FINE, "Searching for path:");
+        assignment.forEach(var -> {
+            logger.log(Level.FINE, var.start_city + "->" + var.end_city);
+        });
         boolean solved = solve_aux(0);
 
         // no suitable set of rides was found was found
         if (!solved) {
+            logger.log(Level.FINE, "No solution found!");
             return null;
         }
-
+        logger.log(Level.FINE, "Found solution:");
         // a set of rides was found, return them.
         List<Ride> rides_to_reserve = new ArrayList<>();
         assignment.forEach(var -> {
+            logger.log(Level.FINE, "------------------------------------------");
+            logger.log(Level.FINE, var.start_city + "->" + var.end_city);
+            logger.log(Level.FINE, "On Ride:\n " + var.value.toString());
             rides_to_reserve.add(var.getValue());
         });
+
         return rides_to_reserve;
     }
 
     private boolean solve_aux(int solver_index) {
-        if (solver_index == assignment.size())
+        if (solver_index == assignment.size()) {
             return true;
+        }
 
         for (Ride ride : assignment.get(solver_index).getDomain()) {
             if (already_seen_bitmap.get(ride.getId())) continue; //someone before me already used this ride.

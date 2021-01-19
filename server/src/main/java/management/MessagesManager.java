@@ -6,7 +6,6 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import entities.Ride;
 import entities.Server;
-import org.apache.jute.compiler.JString;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -21,7 +20,7 @@ public class MessagesManager {
     public static final String ROOT_LOG_NAME = "ds-hw2";
     public static final Level LOG_LEVEL = Level.FINER;
     public static final Logger ROOT_LOGGER = Logger.getLogger(ROOT_LOG_NAME);
-
+    public static final MessagesManager logger = MessagesManager.instance;
     private static final String OPERATION = "operation";
     private static final String DATA = "data";
 
@@ -33,10 +32,14 @@ public class MessagesManager {
         JsonObject json_message = JsonParser.parseString(data_string).getAsJsonObject();
         JsonElement operation = json_message.get(OPERATION);
         JsonElement data = json_message.get(DATA);
+        logger.log(Level.FINE, "Processing message...");
         if (operation != null && data != null) {
             JsonObject ride_as_json = data.getAsJsonObject();
             Ride received_ride = Ride.deserialize(ride_as_json);
+            logger.log(Level.FINE, "Operation " + operation.getAsString());
+            logger.log(Level.FINE, "Ride " + received_ride.toString());
             if (operation.getAsString().equals(OPERATION_NEW_RIDE)) {
+
                 ServerManager.getInstance().addRide(received_ride);
             } else if (operation.getAsString().equals(OPERATION_UPDATE_RIDE)) {
                 ServerManager.getInstance().updateRide(received_ride);

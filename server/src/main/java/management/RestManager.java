@@ -4,7 +4,6 @@ import entities.City;
 import entities.Reservation;
 import entities.Ride;
 import entities.Server;
-import generated.reservation;
 import grpc.sscClient;
 import io.grpc.stub.StreamObserver;
 import utilities.PathSolver;
@@ -26,34 +25,37 @@ public class RestManager {
      * @return the added ride on success or Error message
      */
     public static String publishRide(Ride ride) {
-        logger.log(Level.FINE, "----------------------- RESET REQUEST (PUBLISH RIDE) -----------------------");
+
         ServerManager sm = ServerManager.getInstance();
         Server leader_server = sm.getLeader(ride.getStartPosition().getName());
+        String result = "";
         if (sm.getServer().getName().equals(leader_server.getName())) {
             Ride new_ride = sm.addRideBroadCast(ride);
-            return new_ride.toString(); // think how to return to client... serialize for now
+            result = new_ride.toString();
+        } else {
+            sscClient grpc_client = leader_server.getGrpcClient();
+            // @TODO: add retry for a couple of times in case the leader failed while broadcasting - we want to send this to the new leader
+            result = grpc_client.addRideLeader(ride).toString();
         }
-        sscClient grpc_client = leader_server.getGrpcClient();
-        // @TODO: add retry for a couple of times in case the leader failed while broadcasting - we want to send this to the new leader
-        return grpc_client.addRideLeader(ride).toString();
+        return result;
     }
 
     public static String reserveRide(Reservation reservation) {
         final List<String> path = reservation.getPath();
         assert path.size() >= 2;
-
+        String result = "";
         if (path.size() == 2) {
-            return reserveOneRide(reservation);
+            result = reserveOneRide(reservation);
         } else {
-            return reservePath(reservation);
+            result = reservePath(reservation);
         }
+        return result;
     }
 
     /**
      * Called from the RESET server
      */
     public static String getSnapshot() {
-        logger.log(Level.FINE, "----------------------- RESET REQUEST (GET SNAPSHOT) -----------------------");
         ServerManager sm = ServerManager.getInstance();
         final String this_server_name = sm.getServer().getName();
         Map<String, Server> system_shards = sm.getSystemShards();
@@ -96,6 +98,7 @@ public class RestManager {
             stringBuilder.append("------------------------------------\n");
         });
         logger.log(Level.FINE, "Finished getting rides, total of " + all_rides.size() + " ride(s)");
+
         return stringBuilder.toString();
     }
 
@@ -110,13 +113,17 @@ public class RestManager {
             // send reserve request to each leader
             Ride reserved_ride = Ride.nullRide();
             for (Server leader : leaders) {
+                logger.log(Level.FINE, "Asking leader: [" + leader.getName() + "] for rides...");
                 if (leader.getName().equals(serverManager.getServer().getName())) {
+                    logger.log(Level.FINE, "Trying to reserve on local rides");
                     reserved_ride = serverManager.reserveOneRideIfAvailableAndBroadCast(reservation);
                 } else {
                     sscClient grpc_client = leader.getGrpcClient();
+                    logger.log(Level.FINE, "initlizing GRPC request to reserve one ride...");
                     reserved_ride = grpc_client.blockingReserveRide(reservation.getReservationForGRPC());
                 }
                 if (!reserved_ride.isNull()) {
+                    logger.log(Level.FINER, "Found ride with leader [" + leader.getName() + "] !");
                     break;
                 }
             }
@@ -149,55 +156,62 @@ public class RestManager {
                 } else {
                     sscClient grpc_client = leader.getGrpcClient();
                     server_observer.put(leader, grpc_client.nonBlockingReserveRide(reservation.getReservationForGRPC(), all_relevant_rides, countDownLatch));
-
+                    grpc_client.shutdown();
                 }
             }
 
             //wait for everyone
             try {
-                countDownLatch.await(5, TimeUnit.SECONDS);
+                logger.log(Level.FINER, "Waiting for servers to respond");
+                if (!countDownLatch.await(5, TimeUnit.SECONDS)) {
+                    server_observer.values().forEach(StreamObserver::onCompleted);
+                    serverManager.releaseGLock(g_lock);
+                    logger.log(Level.WARNING, "Timeout while waiting for servers response");
+                    return "Server connection error\n";
+                }
+
+
+                //release glock
+                serverManager.releaseGLock(g_lock);
+
+                //release irrelevant servers
+                List<Server> relevant_servers = all_relevant_rides.stream()
+                        .map(ride -> ServerManager.getInstance().getLeader(ride.getStartPosition().getName()))
+                        .distinct().collect(Collectors.toList());
+                server_observer.entrySet().stream()
+                        .filter((entry) -> !relevant_servers.contains(entry.getKey()))
+                        .forEach(entry -> entry.getValue().onCompleted());
+
+
+                //backtrack
+                PathSolver path_solver = new PathSolver(all_relevant_rides, path);
+                List<Ride> rides_to_reserve = path_solver.solve();
+
+                if (rides_to_reserve == null) {
+                    relevant_servers.forEach(relevant -> server_observer.get(relevant).onCompleted()); //TODO: should we catch exception?
+                    return "No available ride found!\n";
+                }
+
+                //broadcast
+                final Map<Server, List<String>> message_map = new HashMap<>();
+                rides_to_reserve.forEach(ride -> {
+                    Set<Server> followers = serverManager.getCityFollowers(ride.getStartPosition());
+                    String message = MessagesManager.MessageFactory.updateRideBroadCastMessage(ride);
+                    MessagesManager.MessageFactory.appendMessageToServers(followers, message, message_map);
+                });
+                serverManager.atomicBroadcast(message_map);
+
+
+                //release everyone
+                relevant_servers.forEach(relevant -> server_observer.get(relevant).onCompleted()); //TODO: should we catch exception?
+
+                return rides_to_reserve.stream().map(Ride::toString).collect(Collectors.joining("----\n")); //TODO: think about it
             } catch (InterruptedException e) {
+                serverManager.releaseGLock(g_lock);
+                server_observer.values().forEach(StreamObserver::onCompleted);
                 e.printStackTrace();
             }
-
-            //release glock
-            serverManager.releaseGLock(g_lock);
-
-            //release irrelevant servers
-            List<Server> relevant_servers = all_relevant_rides.stream()
-                    .map(ride -> ServerManager.getInstance().getLeader(ride.getStartPosition().getName()))
-                    .distinct().collect(Collectors.toList());
-            server_observer.entrySet().stream()
-                    .filter((entry) -> !relevant_servers.contains(entry.getKey()))
-                    .forEach(entry -> entry.getValue().onCompleted());
-
-            // Release global lock
-            serverManager.releaseGLock(g_lock);
-
-            //backtrack
-            PathSolver path_solver = new PathSolver(all_relevant_rides, path);
-            List<Ride> rides_to_reserve = path_solver.solve();
-
-            if (rides_to_reserve == null) {
-                relevant_servers.forEach(relevant -> server_observer.get(relevant).onCompleted()); //TODO: should we catch exception?
-                return "No available ride found!\n";
-            }
-
-            //broadcast
-            final Map<Server, List<String>> message_map = new HashMap<>();
-            rides_to_reserve.forEach(ride -> {
-                Set<Server> followers = serverManager.getCityFollowers(ride.getStartPosition());
-                String message = MessagesManager.MessageFactory.updateRideBroadCastMessage(ride);
-                MessagesManager.MessageFactory.appendMessageToServers(followers, message, message_map);
-            });
-            serverManager.atomicBroadcast(message_map);
-
-
-            //release everyone
-            relevant_servers.forEach(relevant -> server_observer.get(relevant).onCompleted()); //TODO: should we catch exception?
-
-            return rides_to_reserve.stream().map(Ride::toString).collect(Collectors.joining("----\n")); //TODO: think about it
-
+            return "Error reserving path\n";
         }
     }
 }

@@ -31,13 +31,13 @@ public class sscService extends sscGrpc.sscImplBase {
 
     @Override
     public StreamObserver<reservation> reserveRides(StreamObserver<ride> responseObserver) {
-        ReserveRequestHandler newHandler = null;
         try {
-            newHandler = ReserveRequestHandler.getNewHandler(responseObserver);
+            ReserveRequestHandler newHandler = ReserveRequestHandler.getNewHandler(responseObserver);
+            return newHandler;
         } catch (InterruptedException e) {
             //TODO: catch this focking exception by order of the peaky blinders
             System.out.println("oops..." + e.getMessage());
         }
-        return newHandler;
+        return null;
     }
 }

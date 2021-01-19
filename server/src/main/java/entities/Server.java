@@ -97,6 +97,8 @@ public class Server {
     }
 
     public void shutdown() {
+        System.out.println("Shutting down server ...");
+        heartbeat_time = -1;
         if (grpc_client != null) {
             grpc_client.shutdown();
         }

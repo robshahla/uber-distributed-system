@@ -1,24 +1,11 @@
 package generated;
 
 import static io.grpc.MethodDescriptor.generateFullMethodName;
-import static io.grpc.stub.ClientCalls.asyncBidiStreamingCall;
-import static io.grpc.stub.ClientCalls.asyncClientStreamingCall;
-import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
-import static io.grpc.stub.ClientCalls.asyncUnaryCall;
-import static io.grpc.stub.ClientCalls.blockingServerStreamingCall;
-import static io.grpc.stub.ClientCalls.blockingUnaryCall;
-import static io.grpc.stub.ClientCalls.futureUnaryCall;
-import static io.grpc.stub.ServerCalls.asyncBidiStreamingCall;
-import static io.grpc.stub.ServerCalls.asyncClientStreamingCall;
-import static io.grpc.stub.ServerCalls.asyncServerStreamingCall;
-import static io.grpc.stub.ServerCalls.asyncUnaryCall;
-import static io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall;
-import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
 
 /**
  */
 @javax.annotation.Generated(
-    value = "by gRPC proto compiler (version 1.33.0)",
+    value = "by gRPC proto compiler (version 1.35.0)",
     comments = "Source: scheme.proto")
 public final class sscGrpc {
 
@@ -172,42 +159,42 @@ public final class sscGrpc {
      */
     public void getRidesAsync(generated.emptyMessage request,
         io.grpc.stub.StreamObserver<generated.Response> responseObserver) {
-      asyncUnimplementedUnaryCall(getGetRidesAsyncMethod(), responseObserver);
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getGetRidesAsyncMethod(), responseObserver);
     }
 
     /**
      */
     public void addRideLeader(generated.ride request,
         io.grpc.stub.StreamObserver<generated.Response> responseObserver) {
-      asyncUnimplementedUnaryCall(getAddRideLeaderMethod(), responseObserver);
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getAddRideLeaderMethod(), responseObserver);
     }
 
     /**
      */
     public io.grpc.stub.StreamObserver<generated.reservation> reserveRides(
         io.grpc.stub.StreamObserver<generated.ride> responseObserver) {
-      return asyncUnimplementedStreamingCall(getReserveRidesMethod(), responseObserver);
+      return io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall(getReserveRidesMethod(), responseObserver);
     }
 
     @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
       return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
           .addMethod(
             getGetRidesAsyncMethod(),
-            asyncServerStreamingCall(
+            io.grpc.stub.ServerCalls.asyncServerStreamingCall(
               new MethodHandlers<
                 generated.emptyMessage,
                 generated.Response>(
                   this, METHODID_GET_RIDES_ASYNC)))
           .addMethod(
             getAddRideLeaderMethod(),
-            asyncUnaryCall(
+            io.grpc.stub.ServerCalls.asyncUnaryCall(
               new MethodHandlers<
                 generated.ride,
                 generated.Response>(
                   this, METHODID_ADD_RIDE_LEADER)))
           .addMethod(
             getReserveRidesMethod(),
-            asyncBidiStreamingCall(
+            io.grpc.stub.ServerCalls.asyncBidiStreamingCall(
               new MethodHandlers<
                 generated.reservation,
                 generated.ride>(
@@ -234,7 +221,7 @@ public final class sscGrpc {
      */
     public void getRidesAsync(generated.emptyMessage request,
         io.grpc.stub.StreamObserver<generated.Response> responseObserver) {
-      asyncServerStreamingCall(
+      io.grpc.stub.ClientCalls.asyncServerStreamingCall(
           getChannel().newCall(getGetRidesAsyncMethod(), getCallOptions()), request, responseObserver);
     }
 
@@ -242,7 +229,7 @@ public final class sscGrpc {
      */
     public void addRideLeader(generated.ride request,
         io.grpc.stub.StreamObserver<generated.Response> responseObserver) {
-      asyncUnaryCall(
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
           getChannel().newCall(getAddRideLeaderMethod(), getCallOptions()), request, responseObserver);
     }
 
@@ -250,7 +237,7 @@ public final class sscGrpc {
      */
     public io.grpc.stub.StreamObserver<generated.reservation> reserveRides(
         io.grpc.stub.StreamObserver<generated.ride> responseObserver) {
-      return asyncBidiStreamingCall(
+      return io.grpc.stub.ClientCalls.asyncBidiStreamingCall(
           getChannel().newCall(getReserveRidesMethod(), getCallOptions()), responseObserver);
     }
   }
@@ -273,14 +260,14 @@ public final class sscGrpc {
      */
     public java.util.Iterator<generated.Response> getRidesAsync(
         generated.emptyMessage request) {
-      return blockingServerStreamingCall(
+      return io.grpc.stub.ClientCalls.blockingServerStreamingCall(
           getChannel(), getGetRidesAsyncMethod(), getCallOptions(), request);
     }
 
     /**
      */
     public generated.Response addRideLeader(generated.ride request) {
-      return blockingUnaryCall(
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
           getChannel(), getAddRideLeaderMethod(), getCallOptions(), request);
     }
   }
@@ -303,7 +290,7 @@ public final class sscGrpc {
      */
     public com.google.common.util.concurrent.ListenableFuture<generated.Response> addRideLeader(
         generated.ride request) {
-      return futureUnaryCall(
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
           getChannel().newCall(getAddRideLeaderMethod(), getCallOptions()), request);
     }
   }

@@ -171,12 +171,13 @@ public class ServerManager {
     public Ride addRide(Ride ride) {
         synchronized (rides) {
             Ride existing_ride = this.rides.stream().filter(ride::equals).findAny().orElse(Ride.nullRide());
-            System.out.println("Existing ride: " + existing_ride);
             if (existing_ride.isNull()) {
-                System.out.println("Exisiting ride is null :)");
+                logger.log(Level.FINE, "Adding new ride");
                 rides.add(ride);
                 return this.rides.stream().filter(ride::equals).findAny().orElse(null);
             }
+            logger.log(Level.FINE, "Found exisiting ride " + existing_ride);
+            logger.log(Level.FINE, "Skipping...");
             return existing_ride;
         }
     }
@@ -258,7 +259,7 @@ public class ServerManager {
     public City getCity(String city_name) {
         City found_city = cities.stream().filter(city -> city.getName().equals(city_name)).findAny().orElse(null);
         if (found_city == null) {
-            logger.log(Level.SEVERE, "Could not find city [" + city_name + "]");
+            logger.log(Level.SEVERE, " city [" + city_name + "]");
 
         }
         return found_city;

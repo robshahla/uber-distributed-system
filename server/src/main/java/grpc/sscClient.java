@@ -130,6 +130,7 @@ public class sscClient {
 
             @Override
             public void onError(Throwable t) {
+                logger.log(Level.FINE, "Got onError from leader, releasing countDownLatch..." + t.getMessage());
                 countDownLatch.countDown();
             }
 

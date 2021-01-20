@@ -70,6 +70,36 @@ curl -X POST -H "Content-Type: application/json" -d '{"first_name": "Emil", "las
 
 
 
+
+curl -X POST -H "Content-Type: application/json" -d '{"first_name": "paz", "last_name": "pz", "phone": "0500000000", "start_position": "A", "end_position": "B", "departure_time": "15/02/2021", "vacancies": "4", "pd": "5"}' http://0.0.0.0:8081/publishRide
+curl -X POST -H "Content-Type: application/json" -d '{"first_name": "Rob", "last_name": "pz", "phone": "0500000000", "start_position": "C", "end_position": "B", "departure_time": "15/02/2021", "vacancies": "4", "pd": "0"}' http://0.0.0.0:8083/publishRide
+curl -X POST -H "Content-Type: application/json" -d '{"first_name": "paz1", "last_name": "pz", "phone": "0500000000", "start_position": "A", "end_position": "B", "departure_time": "15/02/2021", "vacancies": "4", "pd": "5"}' http://0.0.0.0:8081/publishRide &
+curl -X POST -H "Content-Type: application/json" -d '{"first_name": "paz2", "last_name": "pz", "phone": "0500000000", "start_position": "C", "end_position": "B", "departure_time": "15/02/2021", "vacancies": "4", "pd": "0"}' http://0.0.0.0:8083/publishRide
+curl -X POST -H "Content-Type: application/json" -d '{"first_name": "paz3", "last_name": "pz", "phone": "0500000000", "start_position": "A", "end_position": "B", "departure_time": "15/02/2021", "vacancies": "4", "pd": "5"}' http://0.0.0.0:8081/publishRide
+curl -X POST -H "Content-Type: application/json" -d '{"first_name": "paz2", "last_name": "pz", "phone": "0500000000", "start_position": "C", "end_position": "B", "departure_time": "15/02/2021", "vacancies": "4", "pd": "0"}' http://0.0.0.0:8083/publishRide
+curl -X POST -H "Content-Type: application/json" -d '{"first_name": "paz1", "last_name": "pz", "phone": "0500000000", "start_position": "A", "end_position": "B", "departure_time": "15/02/2021", "vacancies": "4", "pd": "5"}' http://0.0.0.0:8081/publishRide
+curl -X POST -H "Content-Type: application/json" -d '{"first_name": "paz2", "last_name": "pz", "phone": "0500000000", "start_position": "C", "end_position": "B", "departure_time": "15/02/2021", "vacancies": "4", "pd": "0"}' http://0.0.0.0:8083/publishRide
+curl -X POST -H "Content-Type: application/json" -d '{"first_name": "paz1", "last_name": "pz", "phone": "0500000000", "start_position": "A", "end_position": "B", "departure_time": "15/02/2021", "vacancies": "4", "pd": "5"}' http://0.0.0.0:8081/publishRide
+curl -X POST -H "Content-Type: application/json" -d '{"first_name": "paz2", "last_name": "pz", "phone": "0500000000", "start_position": "C", "end_position": "B", "departure_time": "15/02/2021", "vacancies": "4", "pd": "0"}' http://0.0.0.0:8083/publishRide
+
+curl -X POST -H "Content-Type: application/json" -d '{"first_name": "scott", "last_name": "sh", "path": "A,B", "departure_time": "15/02/2021"}' http://0.0.0.0:8084/reserveRide
+curl -X POST -H "Content-Type: application/json" -d '{"first_name": "kevin", "last_name": "sh", "path": "A,B", "departure_time": "15/02/2021"}' http://0.0.0.0:8085/reserveRide
+curl -X POST -H "Content-Type: application/json" -d '{"first_name": "jim", "last_name": "sh", "path": "C,B", "departure_time": "15/02/2021"}' http://0.0.0.0:8081/reserveRide
+curl -X POST -H "Content-Type: application/json" -d '{"first_name": "scarn", "last_name": "sh", "path": "C,B", "departure_time": "15/02/2021"}' http://0.0.0.0:8082/reserveRide
+curl -X POST -H "Content-Type: application/json" -d '{"first_name": "creed", "last_name": "sh", "path": "C,B", "departure_time": "15/02/2021"}' http://0.0.0.0.5:8083/reserveRide
+curl -X POST -H "Content-Type: application/json" -d '{"first_name": "pam", "last_name": "sh", "path": "C,B", "departure_time": "15/02/2021"}' http://0.0.0.0:8084/reserveRide
+
+curl -X POST -H "Content-Type: application/json" -d '{"first_name": "oscar", "last_name": "sh", "path": "C,B", "departure_time": "15/02/2021"}' http://0.0.0.0:8085/reserveRide
+
+curl -X POST -H "Content-Type: application/json" -d '{"first_name": "Roy", "last_name": "sh", "path": "A,C,B", "departure_time": "15/02/2021"}' http://0.0.0.0:8081/reserveRide
+
+curl -X POST -H "Content-Type: application/json" -d '{"first_name": "dwight", "last_name": "sh", "path": "C,B", "departure_time": "15/02/2021"}' http://0.0.0.0:8082/reserveRide
+curl "http://0.0.0.0:8081/snapshot"
+
+curl -X POST -H "Content-Type: application/json" -d '{"first_name": "daryl", "last_name": "sh", "path": "A,C,B,D,A,B", "departure_time": "15/02/2021"}' http://0.0.0.0:8081/reserveRide
+
+
+
 #    private void btnSnapshotActionPerformed(ActionEvent e) {
 #        var client = HttpClient.newHttpClient();
 #        var request = HttpRequest.newBuilder(

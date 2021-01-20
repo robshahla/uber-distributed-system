@@ -74,7 +74,7 @@ public class ReserveRequestHandler implements StreamObserver<reservation> {
 
     @Override
     public void onError(Throwable t) {
-        logger.log(Level.FINE, "Got onError from Client, releasing semaphore...");
+        logger.log(Level.FINE, "Got onError from Client, releasing semaphore..." + t.getMessage());
         release();
 
     }
@@ -82,6 +82,7 @@ public class ReserveRequestHandler implements StreamObserver<reservation> {
     @Override
     public void onCompleted() {
         responseObserver.onCompleted();
+        logger.log(Level.FINE, "Got onCompleted from Client, releasing semaphore...");
         release();
     }
 

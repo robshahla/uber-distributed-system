@@ -24,12 +24,24 @@ class NetworkConfig:
             yield ".".join([self.initial_address.rsplit(".", 1)[0], str(counter)])
             counter += 1
 
+    def buildNetworkBridge(self):
+        os.system('docker network rm ' + self.subnet_name)
+        time.sleep(2)
+        command = [
+            'docker', 'network',
+            'create',
+            '--subnet', self.subnet_address,
+            self.subnet_name,
+        ]
+        os.system(" ".join(command))
+
 
 class Server:
     def __init__(self, number: int, ip_address: str, shards: list):
         base_server_name = NetworkConfig().server_base_name
-        self.name = base_server_name + '-' + str(number + 1)
+        self.name = base_server_name + '-' + str(number)
         self.ip_address = ip_address
+        self.outside_address = '0.0.0.0:' + str(int(NetworkConfig().rest_port) + number)
         self.shards = shards
 
     def getConfig(self):
@@ -46,6 +58,19 @@ class City:
         self.name = name
         self.x_co = x_co
         self.y_co = y_co
+        self.shard = ""
+
+    def setShard(self, shard: str):
+        self.shard = shard
+        return self
+
+    def getConfig(self):
+        return {
+            'city-name': self.name,
+            'X': self.x_co,
+            'Y': self.y_co,
+            'shard': self.shard
+        }
 
 
 # gets number of servers and cities coordinates from the stdin and return an int and a list of dictionaries
@@ -56,30 +81,28 @@ def getConfigs():
 
     cities = []
     for line in sys.stdin.readlines():
-        city_info = line.split(",")
+        city_info = line.replace('\n', '').split(",")
         cities.append(City(city_info[0], city_info[1], city_info[2]))
 
     return servers_number, cities
 
 
-def run_zookeeper(container_name: str, address: str):
+def runZookeeper(container_name: str, address: str):
     os.system('docker rm -f ' + container_name)
     time.sleep(3)
-    subprocess.run(['docker', 'rm', '-f', container_name])
     command = [
         'docker', 'run',
         '--network', NetworkConfig().subnet_name,
         '--ip', address,
-
         '--name', container_name,
         '--restart', 'always',
         '-d', 'zookeeper'
     ]
     os.system(" ".join(command))
-    subprocess.run(command)
 
 
-def run_cleaner(container_name: str, generator, zookeeper_container_name: str, zookeeper_connection: str, shards: list):
+
+def runCleaner(container_name: str, generator, zookeeper_container_name: str, zookeeper_connection: str, shards: list):
     docker_image_name = 'cleaner:v1'
     os.system(f'cd ./cleaner/ && docker image build -t {docker_image_name} .')
     os.system('docker rm -f ' + container_name)
@@ -98,7 +121,7 @@ def run_cleaner(container_name: str, generator, zookeeper_container_name: str, z
     os.system(" ".join(command))
 
 
-def run_servers(servers_config: list, zookeeper_container_name: str, servers_number: int):
+def runServers(servers_config: list, zookeeper_container_name: str, servers_number: int):
     docker_image_name = 'server:v3'
     os.system(f'cd ./servers/ && docker image build --no-cache -t {docker_image_name} .')
 
@@ -110,81 +133,105 @@ def run_servers(servers_config: list, zookeeper_container_name: str, servers_num
     time.sleep(2)
 
     # create the containers
-    for i in range(len(servers_config)):
-        server_name = servers_config[i].name
-        server_ip = servers_config[i].ip_address
+    for server in servers_config:
         command = [
             'docker', 'run ',
             '--network', NetworkConfig().subnet_name,
-            '--ip', server_ip,
-            '--link', zookeeper_container_name + ':' + server_name,
-            '-p', '0.0.0.0:' + str(8081 + i) + ':' + '8080',
+            '--ip', server.ip_address,
+            '--link', zookeeper_container_name + ':' + server.name,
+            '-p', server.outside_address + ':' + '8080',
             '-d',
-            '--name', server_name,
+            '--name', server.name,
             '-t', f'\"{docker_image_name}\"',
-            './config.json', server_name
+            './config.json', server.name
         ]
         os.system(" ".join(command))
 
 
-def insertShardForCity(cities):
-    cities_info = []
-    cities_info.append(cities[0].addShard('shard-1'))
-    cities_info.append(cities[0].addShard('shard-1'))
-    cities_info.append(cities[0].addShard('shard-2'))
+# return a list that contains all of the cities with their shars assigned, and a list of all the shards
+# in our system
+def insertShardForCity(cities, servers_number):
+    assert servers_number > 0
 
-    return cities_info, ['shard-1', 'shard-2']
+    shards_number = (len(cities) // 3) + 1  # 3 to 4 cities in each shard
+    if len(cities) >= servers_number:
+        shards_number = servers_number
+
+    shards = ['shard-' + str(shard_number) for shard_number in range(1, shards_number + 1)]
+    cities_info = [cities[city].setShard(shards[city % shards_number]) for city in range(len(cities))]
+
+    return cities_info, shards
 
 
-def getShardsPartition(shards, servers_number):
-    return []
+# return a list that looks like: [['shard-1'], ['shard-1', 'shard-2'], ['shard-2']]
+def getShardsPartition(shards, servers_number: int):
+    quorum_size = servers_number // 2 + 1
+    responsibility_shards = [[] for _ in range(servers_number)]
+    for shard_number in range(len(shards)):
+        for server_number in range(shard_number, shard_number + quorum_size):
+            responsibility_shards[server_number % servers_number].append(shards[shard_number])
+
+    return responsibility_shards
 
 
 def createConfigFile(zookeeper_connection, cities_info, servers_config):
-    configs = {}
-    configs['zk-address'] = zookeeper_connection
-    configs['cities'] = cities_info
-    configs['servers'] = [server.getConfig() for server in servers_config]
-    with open('./servers/config-test.json', 'w') as config_file:
-        json.dump(configs, config_file)
+    configs = {
+        'zk-address': zookeeper_connection,
+        'cities': [city.getConfig() for city in cities_info],
+        'servers': [server.getConfig() for server in servers_config]
+    }
+    with open('./servers/config.json', 'w') as config_file:
+        json.dump(configs, config_file, indent=2)
 
+
+def createServersAdressesFile(servers_config: list):
+    with open('./servers-addresses.txt', 'w') as file:
+        for server in servers_config:
+            file.write(server.name + ',' + server.outside_address + '\n')
 
 
 def main():
     os.system('cp ../server/build/libs/server-1.0-SNAPSHOT.jar ./servers')
-    # servers_number, cities = getConfigs()
+    servers_number, cities = getConfigs()
     # shards = getShards(servers_number, cities)
-    servers_number = 3
-    shards = ['shard-1', 'shard-2']
+    # servers_number = 3
+    # shards = ['shard-1', 'shard-2']
     network_config = NetworkConfig()
+
+    # building network bridge for all the containers
+    network_config.buildNetworkBridge()
+
     generator = network_config.generateIpAddress()
 
     # running zookeeper container
     zookeeper_container_name = 'some-zookeeper'
     zookeeper_address = next(generator)
-    # run_zookeeper(zookeeper_container_name, zookeeper_address)
+    # runZookeeper(zookeeper_container_name, zookeeper_address)
+
+    # building the shards and allocating each city in a shard
+    cities_info, shards = insertShardForCity(cities, servers_number)
 
     # running cleaner
     cleaner_container_name = 'cleaner'
     zookeeper_connection = ':'.join([zookeeper_address, network_config.zookeeper_port])
-    run_cleaner(cleaner_container_name,  generator, zookeeper_container_name, zookeeper_connection, shards)
+    runCleaner(cleaner_container_name, generator, zookeeper_container_name, zookeeper_connection, shards)
 
-    # building tuples of (server_name, server_ip_address, responsible_shards)
-    # cities_info, shards = insertShardForCity(cities)
-    # responsibility_shards = getShardsPartition(shards, servers_number)
-    responsibility_shards = [['shard-1'], ['shard-1', 'shard-2'], ['shard-2']]
+    # configuring the assignment of shards to servers
+    responsibility_shards = getShardsPartition(shards, servers_number)
+    # responsibility_shards = [['shard-1'], ['shard-1', 'shard-2'], ['shard-2']]
 
-    servers_config = [Server(number=number, ip_address=next(generator), shards=responsibility_shards[number])
-                      for number in range(servers_number)]
+    servers_config = [Server(number=number, ip_address=next(generator), shards=responsibility_shards[number - 1])
+                      for number in range(1, servers_number + 1)]
 
     # creating config.json file
-    # createConfigFile(zookeeper_connection, cities_info, servers_config)
+    createConfigFile(zookeeper_connection, cities_info, servers_config)
 
+    createServersAdressesFile(servers_config)
 
     # running servers
-    run_servers(servers_config, zookeeper_container_name, servers_number)
-    print(next(generator))
-    print(next(generator))
+    runServers(servers_config, zookeeper_container_name, servers_number)
+    # print(next(generator))
+    # print(next(generator))
 
 
 if __name__ == '__main__':

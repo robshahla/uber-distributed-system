@@ -52,7 +52,8 @@ public class UberLogger {
 
             StringBuilder builder = new StringBuilder();
             builder
-                    .append("\u001B[31m").append(time).append(" ").append(logger_name).append(" @ ").append(callingMethodName).append(" \n\u001B[32m")
+                    .append("\u001B[31m").append(time).append(" ").append(logger_name).append(" @ ").append(callingMethodName)
+                    .append(" Thread number: ").append(Thread.currentThread().getId()).append(" \n\u001B[32m")
                     .append(level.toString()).append("\t").append(str).append("\n");
             System.out.println(builder.toString());
         }

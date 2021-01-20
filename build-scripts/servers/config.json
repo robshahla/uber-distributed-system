@@ -11,13 +11,55 @@
       "city-name": "B",
       "X": "3",
       "Y": "0",
-      "shard": "shard-1"
+      "shard": "shard-2"
     },
     {
       "city-name": "C",
       "X": "2",
       "Y": "1",
-      "shard": "shard-2"
+      "shard": "shard-3"
+    },
+    {
+      "city-name": "D",
+      "X": "3",
+      "Y": "2",
+      "shard": "shard-4"
+    },
+    {
+      "city-name": "E",
+      "X": "4",
+      "Y": "0",
+      "shard": "shard-5"
+    },
+    {
+      "city-name": "F",
+      "X": "4",
+      "Y": "1",
+      "shard": "shard-6"
+    },
+    {
+      "city-name": "G",
+      "X": "4",
+      "Y": "2",
+      "shard": "shard-7"
+    },
+    {
+      "city-name": "H",
+      "X": "2",
+      "Y": "3",
+      "shard": "shard-8"
+    },
+    {
+      "city-name": "I",
+      "X": "2",
+      "Y": "2",
+      "shard": "shard-9"
+    },
+    {
+      "city-name": "J",
+      "X": "0",
+      "Y": "1",
+      "shard": "shard-10"
     }
   ],
   "servers": [
@@ -26,7 +68,12 @@
       "rest-address": "172.18.1.4:8080",
       "grpc-address": "172.18.1.4:8000",
       "shards": [
-        "shard-1"
+        "shard-1",
+        "shard-6",
+        "shard-7",
+        "shard-8",
+        "shard-9",
+        "shard-10"
       ]
     },
     {
@@ -35,7 +82,11 @@
       "grpc-address": "172.18.1.5:8000",
       "shards": [
         "shard-1",
-        "shard-2"
+        "shard-2",
+        "shard-7",
+        "shard-8",
+        "shard-9",
+        "shard-10"
       ]
     },
     {
@@ -43,7 +94,103 @@
       "rest-address": "172.18.1.6:8080",
       "grpc-address": "172.18.1.6:8000",
       "shards": [
-        "shard-2"
+        "shard-1",
+        "shard-2",
+        "shard-3",
+        "shard-8",
+        "shard-9",
+        "shard-10"
+      ]
+    },
+    {
+      "server-name": "server-4",
+      "rest-address": "172.18.1.7:8080",
+      "grpc-address": "172.18.1.7:8000",
+      "shards": [
+        "shard-1",
+        "shard-2",
+        "shard-3",
+        "shard-4",
+        "shard-9",
+        "shard-10"
+      ]
+    },
+    {
+      "server-name": "server-5",
+      "rest-address": "172.18.1.8:8080",
+      "grpc-address": "172.18.1.8:8000",
+      "shards": [
+        "shard-1",
+        "shard-2",
+        "shard-3",
+        "shard-4",
+        "shard-5",
+        "shard-10"
+      ]
+    },
+    {
+      "server-name": "server-6",
+      "rest-address": "172.18.1.9:8080",
+      "grpc-address": "172.18.1.9:8000",
+      "shards": [
+        "shard-1",
+        "shard-2",
+        "shard-3",
+        "shard-4",
+        "shard-5",
+        "shard-6"
+      ]
+    },
+    {
+      "server-name": "server-7",
+      "rest-address": "172.18.1.10:8080",
+      "grpc-address": "172.18.1.10:8000",
+      "shards": [
+        "shard-2",
+        "shard-3",
+        "shard-4",
+        "shard-5",
+        "shard-6",
+        "shard-7"
+      ]
+    },
+    {
+      "server-name": "server-8",
+      "rest-address": "172.18.1.11:8080",
+      "grpc-address": "172.18.1.11:8000",
+      "shards": [
+        "shard-3",
+        "shard-4",
+        "shard-5",
+        "shard-6",
+        "shard-7",
+        "shard-8"
+      ]
+    },
+    {
+      "server-name": "server-9",
+      "rest-address": "172.18.1.12:8080",
+      "grpc-address": "172.18.1.12:8000",
+      "shards": [
+        "shard-4",
+        "shard-5",
+        "shard-6",
+        "shard-7",
+        "shard-8",
+        "shard-9"
+      ]
+    },
+    {
+      "server-name": "server-10",
+      "rest-address": "172.18.1.13:8080",
+      "grpc-address": "172.18.1.13:8000",
+      "shards": [
+        "shard-5",
+        "shard-6",
+        "shard-7",
+        "shard-8",
+        "shard-9",
+        "shard-10"
       ]
     }
   ]

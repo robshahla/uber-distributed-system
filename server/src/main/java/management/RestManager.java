@@ -97,6 +97,7 @@ public class RestManager {
             stringBuilder.append(ride.toString());
             stringBuilder.append("------------------------------------\n");
         });
+        stringBuilder.append("Finished getting rides, total of ").append(all_rides.size()).append(" ride(s)\n");
         logger.log(Level.FINE, "Finished getting rides, total of " + all_rides.size() + " ride(s)");
 
         return stringBuilder.toString();
@@ -136,9 +137,10 @@ public class RestManager {
     }
 
     private static String reservePath(Reservation reservation) {
-        // global lock
-        String g_lock = ServerManager.getInstance().gLock();
         synchronized (ServerManager.getInstance()) {
+            // global lock
+            String g_lock = ServerManager.getInstance().gLock();
+
             ServerManager serverManager = ServerManager.getInstance();
             City start_city = serverManager.getCity(reservation.getPath().get(0));
             Set<Server> leaders = new HashSet<>(serverManager.getSystemShards().values());
@@ -146,7 +148,7 @@ public class RestManager {
             Map<Server, StreamObserver<generated.reservation>> server_observer = new HashMap<Server, StreamObserver<generated.reservation>>();
 
             List<String> path = reservation.getReservationForGRPC().getPathList();
-
+            logger.log(Level.FINER, "Getting all relevant rides from leaders");
             CountDownLatch countDownLatch = new CountDownLatch(leaders.size());
             for (Server leader : leaders) {
                 if (leader.getName().equals(serverManager.getServer().getName())) {
@@ -159,11 +161,12 @@ public class RestManager {
                     server_observer.put(leader, grpc_client.nonBlockingReserveRide(reservation.getReservationForGRPC(), all_relevant_rides, countDownLatch));
                 }
             }
-
+            logger.log(Level.FINER, "Got all the rides from leaders");
             //wait for everyone
             try {
                 logger.log(Level.FINER, "Waiting for servers to respond");
                 if (!countDownLatch.await(10, TimeUnit.SECONDS)) {
+                    logger.log(Level.FINER, "Time is up, releasing everyone"); //TODO: remove
                     server_observer.values().forEach(StreamObserver::onCompleted);
                     serverManager.releaseGLock(g_lock);
                     logger.log(Level.WARNING, "Timeout while waiting for servers response");

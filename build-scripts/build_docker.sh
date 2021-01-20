@@ -6,8 +6,8 @@ echo cleaning zookeeper
 cd ./cleaner/
 docker image build -t cleaner:v1 .
 docker rm -f cleaner
-docker run --network uber-network --ip 172.18.0.4 --link some-zookeeper:cleaner -d --name cleaner -t "cleaner:v1" \
---zookeeper_host 172.18.0.2:2181 --shards shard-1 shard-2 shard-3
+docker run --link some-zookeeper-1:cleaner -d --name cleaner -t "cleaner:v1" \
+--zookeeper_host 0.0.0.0:2181 --shards shard-1 shard-2 shard-3
 
 #sleep 5
 #cd ../servers/
@@ -46,3 +46,15 @@ docker run --network uber-network --ip 172.18.0.4 --link some-zookeeper:cleaner 
 #apt-get install curl
 
 #docker run -it --rm --network uber-network --ip 172.18.0.7 --link some-zookeeper:zookeeper zookeeper zkCli.sh -server zookeeper
+
+cp ../../server/build/libs/server-1.0-SNAPSHOT.jar .
+docker run --name some-zookeeper-1 --restart always -d zookeeper
+docker rm -f cleaner
+docker run --link some-zookeeper-1:cleaner -d --name cleaner -t "cleaner:v1" --zookeeper_host 172.17.0.2:2181 --shards shard-1 shard-2 shard-3
+docker image build -t server:v3 .
+docker rm -f server-1
+docker rm -f server-2
+docker rm -f server-3
+docker run --link some-zookeeper-1:server-1 -p 8081:8080 -p 8001:8000 -d --name server-1 -t "server:v3" ./config.json server-1
+docker run --link some-zookeeper-1:server-2 -p 8082:8080 -p 8002:8000 -d --name server-2 -t "server:v3" ./config.json server-2
+docker run --link some-zookeeper-1:server-3 -p 8083:8080 -p 8003:8000 -d --name server-3 -t "server:v3" ./config.json server-3

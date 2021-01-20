@@ -5,6 +5,7 @@ import entities.Reservation;
 import entities.Ride;
 import entities.Server;
 import grpc.GrpcMain;
+import management.logging.UberLogger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -49,7 +50,7 @@ public class ServerManager {
     private final List<Ride> rides;
     public ZKManager zk;
     //    private static final Logger logger = Logger.getLogger(ServerManager.class.getName());
-    private static MessagesManager logger = MessagesManager.instance;
+    private static UberLogger logger = UberLogger.getLogger(ServerManager.class.getName());
     /**
      * This server name.
      */
@@ -107,18 +108,24 @@ public class ServerManager {
             if (serverName.equals(server_name)) {
                 this.current_server = server;
             }
+            logger.log(Level.CONFIG, "Adding Server: " + server.toString());
 
         });
+        Server.killAll();
         system_shards_aux.forEach(shard -> system_shards.put(shard, null));
         return true;
     }
 
-    public boolean start() {
+    public boolean start() throws InterruptedException {
         ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
         rootLogger.setLevel(ch.qos.logback.classic.Level.OFF);
         if (!zk.connect()) return false;
-        logger.log(Level.SEVERE, "Hello start!");
         zk.connectToMailbox();
+        logger.log(Level.INFO, "Waiting for all servers to get online");
+        while (system_servers.values().stream().anyMatch(server -> !server.isAlive())) {
+            Thread.sleep(100);
+        }
+        logger.log(Level.INFO,"All servers are up and running!");
         GrpcMain.run("8000");
         RestMain.run("8080");
         return true;

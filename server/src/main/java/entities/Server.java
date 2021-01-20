@@ -40,8 +40,11 @@ public class Server {
                 "name='" + name + '\'' +
                 ", grpc_address='" + grpc_address + '\'' +
                 ", rest_address='" + rest_address + '\'' +
+                ", shards=" + shards +
                 '}';
     }
+
+
 
     public String getName() {
         return name;

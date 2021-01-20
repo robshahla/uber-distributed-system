@@ -20,7 +20,8 @@ public class Reservation {
     public Reservation(reservation request) {
         this(request.getFirstName(),
                 request.getLastName(),
-                request.getDepartureTime(), String.join(",", request.getPathList()));
+                request.getDepartureTime(),
+                String.join(",", request.getPathList()));
     }
 
     public reservation getReservationForGRPC() {

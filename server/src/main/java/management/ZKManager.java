@@ -1,6 +1,7 @@
 package management;
 
 import entities.Server;
+import management.logging.UberLogger;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 
@@ -19,7 +20,7 @@ import static management.MessagesManager.ProcessMessage;
 public class ZKManager {
     private final CountDownLatch connectedSignal = new CountDownLatch(1);
     private final Map<String, CountDownLatch> latchMap;
-    private static MessagesManager logger = MessagesManager.instance;
+    private static UberLogger logger = UberLogger.getLogger(ZKManager.class.getName());
     private static final int SESSION_TIME_OUT = 300;
     private ZooKeeper zooKeeper;
     private final String host_addr;
@@ -75,10 +76,11 @@ public class ZKManager {
     }
 
 
-    public synchronized void releaseLock(String lock_name){
+    public synchronized void releaseLock(String lock_name) {
         logger.log(Level.FINER, "Releasing global lock");
         deleteZNode(lock_name);
     }
+
     public synchronized String lock() {
         logger.log(Level.FINER, "Acquiring global lock...");
         ServerManager sm = ServerManager.getInstance();

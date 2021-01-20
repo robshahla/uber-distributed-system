@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import entities.Ride;
 import entities.Server;
+import management.logging.UberLogger;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -13,14 +14,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class MessagesManager {
     public static MessagesManager instance = new MessagesManager();
-    public static final String ROOT_LOG_NAME = "ds-hw2";
-    public static final Level LOG_LEVEL = Level.FINER;
-    public static final Logger ROOT_LOGGER = Logger.getLogger(ROOT_LOG_NAME);
-    public static final MessagesManager logger = MessagesManager.instance;
+
+
+    public static final UberLogger logger = UberLogger.getLogger(MessagesManager.class.getName());
+
+
     private static final String OPERATION = "operation";
     private static final String DATA = "data";
 
@@ -39,7 +40,6 @@ public class MessagesManager {
             logger.log(Level.FINE, "Operation " + operation.getAsString());
             logger.log(Level.FINE, "Ride " + received_ride.toString());
             if (operation.getAsString().equals(OPERATION_NEW_RIDE)) {
-
                 ServerManager.getInstance().addRide(received_ride);
             } else if (operation.getAsString().equals(OPERATION_UPDATE_RIDE)) {
                 ServerManager.getInstance().updateRide(received_ride);
@@ -70,10 +70,6 @@ public class MessagesManager {
                 message_map.get(server).add(message);
             });
         }
-    }
-
-    public void log(Level level, String str) {
-        System.out.println(str);
     }
 
 }

@@ -70,6 +70,7 @@ def run_zookeeper(container_name: str, address: str):
         'docker', 'run',
         '--network', NetworkConfig().subnet_name,
         '--ip', address,
+
         '--name', container_name,
         '--restart', 'always',
         '-d', 'zookeeper'

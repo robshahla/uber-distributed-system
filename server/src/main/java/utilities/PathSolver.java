@@ -3,6 +3,7 @@ package utilities;
 import entities.Ride;
 import management.MessagesManager;
 import management.ServerManager;
+import management.logging.UberLogger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,7 +14,7 @@ import java.util.stream.Collectors;
 
 public class PathSolver {
 
-    private static final MessagesManager logger = MessagesManager.instance;
+    private static UberLogger logger = UberLogger.getLogger(PathSolver.class.getName());
 
     static class Variable {
         String start_city, end_city;

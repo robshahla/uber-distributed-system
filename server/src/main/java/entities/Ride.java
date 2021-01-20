@@ -5,11 +5,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import generated.reservation;
 import generated.ride;
 import management.ServerManager;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.lang.Math.*;
 
@@ -19,7 +22,7 @@ public class Ride {
     private final String first_name, last_name, phone, start_position, end_position, departure_time;
     int vacancies;
     double pd;
-    ArrayList<String> reservations;
+    Set<String> reservations;
 
     private static Ride null_ride;
     private static final int NULL_ID = Integer.MIN_VALUE;
@@ -35,7 +38,7 @@ public class Ride {
         this.vacancies = vacancies;
         this.pd = pd;
         this.id = id;
-        this.reservations = new ArrayList<>();
+        this.reservations = new HashSet<>();
     }
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
@@ -61,6 +64,9 @@ public class Ride {
                 request.getVacancies(),
                 request.getPd(),
                 request.getId());
+        for (reservation res : request.getReservationsList()) {
+            reserve(new Reservation(res));
+        }
     }
 
     public boolean isNull() {
@@ -116,6 +122,7 @@ public class Ride {
             String reservation_name = name.getFirstName() +
                     " " +
                     name.getLastName();
+
             reservations.add(reservation_name);
             return true;
         }
@@ -128,12 +135,12 @@ public class Ride {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Ride ride = (Ride) o;
-        return vacancies == ride.vacancies && Double.compare(ride.pd, pd) == 0 && first_name.equals(ride.first_name) && last_name.equals(ride.last_name) && phone.equals(ride.phone) && start_position.equals(ride.start_position) && end_position.equals(ride.end_position) && departure_time.equals(ride.departure_time) && reservations.equals(ride.reservations);
+        return Objects.equals(first_name, ride.first_name) && Objects.equals(last_name, ride.last_name) && Objects.equals(phone, ride.phone) && Objects.equals(start_position, ride.start_position) && Objects.equals(end_position, ride.end_position) && Objects.equals(departure_time, ride.departure_time);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(first_name, last_name, phone, start_position, end_position, departure_time, vacancies, pd, reservations);
+        return Objects.hash(first_name, last_name, phone, start_position, end_position, departure_time);
     }
 
     /**
@@ -265,21 +272,30 @@ public class Ride {
     }
 
     public ride getRideRequestForGRPC() {
-        return ride.newBuilder()
-                .setFirstName(getFirstName())
-                .setLastName(getLastName())
-                .setPhone(getPhone())
-                .setStartPosition(getStartPosition().getName())
-                .setEndPosition(getEndPosition().getName())
-                .setDepartureTime(getDepartureTime())
-                .setVacancies(getVacancies())
-                .setPd(getPd())
-                .setId(getId())
-                .build();
+        ride.Builder builder = ride.newBuilder()
+                .setFirstName(first_name)
+                .setLastName(last_name)
+                .setPhone(phone)
+                .setStartPosition(start_position)
+                .setEndPosition(end_position)
+                .setDepartureTime(departure_time)
+                .setVacancies(vacancies)
+                .setPd(pd)
+                .setId(id);
+        Set<reservation> collect = reservations.stream().map(
+                reservant -> {
+                    String firstNameReserve = reservant.split(" ")[0];
+                    String lastNameReserve = reservant.split(" ")[1];
+                    return reservation.newBuilder().setFirstName(firstNameReserve).setLastName(lastNameReserve).build();
+                }).collect(Collectors.toSet());
+        builder.addAllReservations(collect);
+        return builder.build();
     }
 
     public static Ride nullRide() {
-        if (null_ride == null) null_ride = new Ride(ride.newBuilder().setId(NULL_ID).build());
+        if (null_ride == null) {
+            null_ride = new Ride(ride.newBuilder().setId(NULL_ID).build());
+        }
         return null_ride;
     }
 }

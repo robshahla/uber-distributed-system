@@ -5,13 +5,14 @@ import entities.Ride;
 import generated.reservation;
 import generated.ride;
 import io.grpc.stub.StreamObserver;
+import management.logging.UberLogger;
 
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 
 public class ReserveRequestHandler implements StreamObserver<reservation> {
-    private static final MessagesManager logger = MessagesManager.instance;
+    private static UberLogger logger = UberLogger.getLogger(ReserveRequestHandler.class.getName());
 
 
     private final Semaphore internal_lock;
@@ -27,11 +28,15 @@ public class ReserveRequestHandler implements StreamObserver<reservation> {
     }
 
     public static ReserveRequestHandler getNewHandler(StreamObserver<ride> responseObserver) throws InterruptedException {
-        logger.log(Level.FINE, "Acquiring semaphore lock...");
-        instance.internal_lock.acquire();
-        logger.log(Level.FINE, "Semaphore lock acquired");
+        instance.acquire();
         instance.responseObserver = responseObserver;
         return instance;
+    }
+
+    private void acquire() throws InterruptedException {
+        logger.log(Level.FINE, "Acquiring semaphore lock...");
+        internal_lock.acquire();
+        logger.log(Level.FINE, "Semaphore lock acquired");
     }
 
     public void release() {
@@ -45,14 +50,14 @@ public class ReserveRequestHandler implements StreamObserver<reservation> {
         final int path_size = path.size();
         logger.log(Level.FINE, "Path length=" + path_size);
         if (path_size < 2) {
-            responseObserver.onCompleted();
+            responseObserver.onNext(Ride.nullRide().getRideRequestForGRPC());
         } else if (path_size == 2) {
             Ride reserved_ride = ServerManager.getInstance()
                     .reserveOneRideIfAvailableAndBroadCast(new Reservation(value));
             if (!reserved_ride.isNull()) {
                 responseObserver.onNext(reserved_ride.getRideRequestForGRPC());
             }
-            responseObserver.onNext(ride.newBuilder().setFirstName("onCompleted").build());
+            responseObserver.onNext(Ride.nullRide().getRideRequestForGRPC());
             //responseObserver.onCompleted();// TODO this should be sent as message (another onNext)
         } else {
             List<Ride> relevant_rides = ServerManager.getInstance()
@@ -62,7 +67,7 @@ public class ReserveRequestHandler implements StreamObserver<reservation> {
                 responseObserver.onNext(relevant_ride.getRideRequestForGRPC());
             }
             //should change this as well
-            responseObserver.onCompleted();
+            responseObserver.onNext(Ride.nullRide().getRideRequestForGRPC());
         }
 
     }
@@ -70,7 +75,7 @@ public class ReserveRequestHandler implements StreamObserver<reservation> {
     @Override
     public void onError(Throwable t) {
         logger.log(Level.FINE, "Got onError from Client, releasing semaphore...");
-        internal_lock.release();
+        release();
 
     }
 

@@ -6,6 +6,7 @@ import entities.Ride;
 import entities.Server;
 import grpc.sscClient;
 import io.grpc.stub.StreamObserver;
+import management.logging.UberLogger;
 import utilities.PathSolver;
 
 import java.util.*;
@@ -16,7 +17,7 @@ import java.util.stream.Collectors;
 
 public class RestManager {
 
-    private static final MessagesManager logger = MessagesManager.instance;
+    private static UberLogger logger = UberLogger.getLogger(RestManager.class.getName());
 
     /**
      * Called from the RESET server
@@ -72,7 +73,6 @@ public class RestManager {
             if (current_server_name.equals(this_server_name)) {
                 logger.log(Level.FINE, "Getting rides from the calling server: " + server.getName());
                 synchronized (all_rides) {
-                    logger.log(Level.FINE, "MNYKE + " + sm.getRides().size()); //TODO: remove
                     all_rides.addAll(sm.getRides());
                     latch.countDown();
                 }
@@ -119,7 +119,7 @@ public class RestManager {
                     reserved_ride = serverManager.reserveOneRideIfAvailableAndBroadCast(reservation);
                 } else {
                     sscClient grpc_client = leader.getGrpcClient();
-                    logger.log(Level.FINE, "initlizing GRPC request to reserve one ride...");
+                    logger.log(Level.FINE, "Initializing GRPC request to reserve one ride...");
                     reserved_ride = grpc_client.blockingReserveRide(reservation.getReservationForGRPC());
                 }
                 if (!reserved_ride.isNull()) {
@@ -127,6 +127,7 @@ public class RestManager {
                     break;
                 }
             }
+
             if (reserved_ride.isNull()) {
                 return "No available ride found!\n";
             }
@@ -156,14 +157,13 @@ public class RestManager {
                 } else {
                     sscClient grpc_client = leader.getGrpcClient();
                     server_observer.put(leader, grpc_client.nonBlockingReserveRide(reservation.getReservationForGRPC(), all_relevant_rides, countDownLatch));
-                    grpc_client.shutdown();
                 }
             }
 
             //wait for everyone
             try {
                 logger.log(Level.FINER, "Waiting for servers to respond");
-                if (!countDownLatch.await(5, TimeUnit.SECONDS)) {
+                if (!countDownLatch.await(10, TimeUnit.SECONDS)) {
                     server_observer.values().forEach(StreamObserver::onCompleted);
                     serverManager.releaseGLock(g_lock);
                     logger.log(Level.WARNING, "Timeout while waiting for servers response");
@@ -174,10 +174,14 @@ public class RestManager {
                 //release glock
                 serverManager.releaseGLock(g_lock);
 
-                //release irrelevant servers
+                //release irrelevant servers (that we contacted using grpc
                 List<Server> relevant_servers = all_relevant_rides.stream()
                         .map(ride -> ServerManager.getInstance().getLeader(ride.getStartPosition().getName()))
                         .distinct().collect(Collectors.toList());
+
+                // Removing this server (if it does exist, as we did not init grpc call on it)
+                relevant_servers.remove(serverManager.getServer());
+
                 server_observer.entrySet().stream()
                         .filter((entry) -> !relevant_servers.contains(entry.getKey()))
                         .forEach(entry -> entry.getValue().onCompleted());
@@ -195,10 +199,14 @@ public class RestManager {
                 //broadcast
                 final Map<Server, List<String>> message_map = new HashMap<>();
                 rides_to_reserve.forEach(ride -> {
+                    ride.reserve(reservation);
                     Set<Server> followers = serverManager.getCityFollowers(ride.getStartPosition());
+                    followers.add(serverManager.getLeader(ride.getStartPosition().getName()));
                     String message = MessagesManager.MessageFactory.updateRideBroadCastMessage(ride);
                     MessagesManager.MessageFactory.appendMessageToServers(followers, message, message_map);
                 });
+
+                // Atomically reserve all rides.
                 serverManager.atomicBroadcast(message_map);
 
 

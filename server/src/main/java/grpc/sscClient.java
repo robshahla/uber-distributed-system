@@ -7,7 +7,7 @@ import generated.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
-import management.MessagesManager;
+import management.logging.UberLogger;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -15,7 +15,7 @@ import java.util.logging.Level;
 
 
 public class sscClient {
-    private static final MessagesManager logger = MessagesManager.instance;
+    private static final UberLogger logger = UberLogger.getLogger(sscClient.class.getName());
     private static final emptyMessage EMPTY_MESSAGE = emptyMessage.newBuilder().build();
     private final sscGrpc.sscBlockingStub blockingStub;
     private final sscGrpc.sscStub asyncStub;
@@ -76,10 +76,9 @@ public class sscClient {
         request_stream = asyncStub.reserveRides(new StreamObserver<ride>() {
             @Override
             public void onNext(ride value) {
-                //TODO: this is temp fix, we should implement proper Request/Response Header in protbuf
-                if (value.getFirstName().equals("onCompleted")) {
+                Ride received_ride = new Ride(value);
+                if (received_ride.isNull()) { // end of rides.
                     countDownLatch.countDown();
-                    request_stream.onCompleted();
                     return;
                 }
                 logger.log(Level.FINER, "Got onNext from server!");
@@ -89,12 +88,12 @@ public class sscClient {
             @Override
             public void onError(Throwable t) {
                 logger.log(Level.SEVERE, "Got onError from server! message: " + t.getMessage());
+                countDownLatch.countDown();
             }
 
             @Override
             public void onCompleted() {
                 logger.log(Level.FINER, "Got onCompleted from server!");
-
             }
         });
 
@@ -102,11 +101,9 @@ public class sscClient {
             // send reserve request
             logger.log(Level.FINE, "Sending stream request to server to reserve one ride if available..");
             request_stream.onNext(reserve);
-//            request_stream.onCompleted(); // TEMP FIX for one ride reservation.
-
             countDownLatch.await();
+            request_stream.onCompleted();
             return reserved_ride[0];
-
         } catch (RuntimeException e) {
             logger.log(Level.WARNING, "Runtime error..." + e.getMessage());
             e.printStackTrace();
@@ -121,8 +118,13 @@ public class sscClient {
         StreamObserver<reservation> request_stream = asyncStub.reserveRides(new StreamObserver<ride>() {
             @Override
             public void onNext(ride value) {
-                synchronized (relevant_rides) {
-                    relevant_rides.add(new Ride(value));
+                Ride received_ride = new Ride(value);
+                if (received_ride.isNull()) {
+                    countDownLatch.countDown();
+                } else {
+                    synchronized (relevant_rides) {
+                        relevant_rides.add(received_ride);
+                    }
                 }
             }
 
@@ -133,7 +135,7 @@ public class sscClient {
 
             @Override
             public void onCompleted() {
-                countDownLatch.countDown();
+
             }
         });
 

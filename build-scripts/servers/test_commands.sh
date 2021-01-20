@@ -67,3 +67,19 @@ curl -X POST -H "Content-Type: application/json" -d '{"first_name": "jim", "last
 
 
 curl -X POST -H "Content-Type: application/json" -d '{"first_name": "Emil", "last_name": "Khshiboun", "phone": "0500000000", "start_position": "C", "end_position": "B", "departure_time": "15/02/2021", "vacancies": "4", "pd": "5"}' http://172.18.1.4:8080/publishRide
+
+
+
+#    private void btnSnapshotActionPerformed(ActionEvent e) {
+#        var client = HttpClient.newHttpClient();
+#        var request = HttpRequest.newBuilder(
+#                URI.create("http://0.0.0.0:8081/snapshot"))
+#                .header("accept", "application/json")
+#                .build();
+#        try {
+#            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+#            System.out.println(response.body());
+#        } catch (IOException | InterruptedException ioException) {
+#            ioException.printStackTrace();
+#        }
+#    }

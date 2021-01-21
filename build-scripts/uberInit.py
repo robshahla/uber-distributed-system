@@ -190,12 +190,19 @@ def createServersAdressesFile(servers_config: list):
             file.write(server.name + ',' + server.outside_address + '\n')
 
 
-def main():
+def copyNeededFiles():
     os.system('cp ../server/build/libs/server-1.0-SNAPSHOT.jar ./servers')
+    os.system('cp ../client/build/libs/client-1.0.jar .')
+
+
+def runGUI():
+    os.system('java -jar client-1.0.jar ./servers-addresses.txt')
+
+
+def main():
+    copyNeededFiles()
+
     servers_number, cities = getConfigs()
-    # shards = getShards(servers_number, cities)
-    # servers_number = 3
-    # shards = ['shard-1', 'shard-2']
     network_config = NetworkConfig()
 
     # building network bridge for all the containers
@@ -218,7 +225,6 @@ def main():
 
     # configuring the assignment of shards to servers
     responsibility_shards = getShardsPartition(shards, servers_number)
-    # responsibility_shards = [['shard-1'], ['shard-1', 'shard-2'], ['shard-2']]
 
     servers_config = [Server(number=number, ip_address=next(generator), shards=responsibility_shards[number - 1])
                       for number in range(1, servers_number + 1)]
@@ -230,8 +236,9 @@ def main():
 
     # running servers
     runServers(servers_config, zookeeper_container_name, servers_number)
-    # print(next(generator))
-    # print(next(generator))
+
+    # running GUI
+    runGUI()
 
 
 if __name__ == '__main__':

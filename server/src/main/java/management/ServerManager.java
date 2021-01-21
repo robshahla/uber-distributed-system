@@ -201,7 +201,7 @@ public class ServerManager {
             //                2) The ride can take the person from/to request path
 
             Ride ride_to_reserve = rides.stream().filter(ride -> isLeaderForRide(ride) &&
-                    ride.canServe(start_city, end_city) &&
+                    ride.canServe(start_city, end_city) && //TODO: here add an `OR` statement between ride.canServe, and another method called ride.containsReserver(reservation)
                     ride.getDepartureTime().equals(reservation.getDepartureTime())
             ).min((ride1, ride2) -> {
                 double d1 = ride1.distanceToLine(start_city);

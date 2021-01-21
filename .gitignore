@@ -6,3 +6,5 @@
 /server/build/classes/java/main/
 *.jar
 /build-scripts/servers-addresses.txt
+.idea/
+**/__pycache__/

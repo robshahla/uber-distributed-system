@@ -4,3 +4,5 @@
 /client/build/classes/java/main/
 /server/build/
 /server/build/classes/java/main/
+*.jar
+/build-scripts/servers-addresses.txt

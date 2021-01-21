@@ -5,7 +5,7 @@ plugins {
 }
 
 application {
-    mainClassName('Uber')
+    mainClass.set('Uber')
 }
 group 'org.ds'
 version '1.0'

@@ -1,7 +1,7 @@
+import json
 import os
 import sys
 import time
-import json
 
 
 # TODO: make this configurable from ENV VAR, using kofiko
@@ -97,7 +97,6 @@ def runZookeeper(container_name: str, address: str):
         '-d', 'zookeeper'
     ]
     os.system(" ".join(command))
-
 
 
 def runCleaner(container_name: str, generator, zookeeper_container_name: str, zookeeper_connection: str, shards: list):
@@ -203,10 +202,9 @@ def runGUI():
 
 
 def main():
-    buildProject()
     copyNeededFiles()
-
     servers_number, cities = getConfigs()
+    buildProject()
     network_config = NetworkConfig()
 
     # building network bridge for all the containers

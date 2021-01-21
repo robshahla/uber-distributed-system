@@ -248,39 +248,35 @@ public class Uber {
             mainFrame.setBackground(Color.black);
             var mainFrameContentPane = mainFrame.getContentPane();
             mainFrameContentPane.setLayout(new MigLayout(
-                    "hidemode 3,align center center",
-                    // columns
-                    "[fill]" +
-                            "[fill]",
-                    // rows
-                    "[]" +
-                            "[]"));
+                "hidemode 3,align center center",
+                // columns
+                "[fill]" +
+                "[fill]",
+                // rows
+                "[]" +
+                "[]"));
 
             //======== panel2 ========
             {
-                panel2.setBorder(new javax.swing.border.CompoundBorder(new javax.swing.border.TitledBorder(new javax.swing.border.EmptyBorder(
-                        0, 0, 0, 0), "JF\u006frmDesi\u0067ner Ev\u0061luatio\u006e", javax.swing.border.TitledBorder.CENTER, javax.swing.border.TitledBorder
-                        .BOTTOM, new java.awt.Font("Dialo\u0067", java.awt.Font.BOLD, 12), java.awt.Color.
-                        red), panel2.getBorder()));
-                panel2.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
-                    @Override
-                    public void propertyChange(java.
-                                                       beans.PropertyChangeEvent e) {
-                        if ("borde\u0072".equals(e.getPropertyName())) throw new RuntimeException();
-                    }
-                });
+//                panel2.setBorder(new javax.swing.border.CompoundBorder(new javax.swing.border.TitledBorder(new javax.
+//                swing.border.EmptyBorder(0,0,0,0), "",javax.swing.border
+//                .TitledBorder.CENTER,javax.swing.border.TitledBorder.BOTTOM,new java.awt.Font("D\u0069alog"
+//                ,java.awt.Font.BOLD,12),java.awt.Color.red),panel2. getBorder
+//                ()));panel2. addPropertyChangeListener(new java.beans.PropertyChangeListener(){@Override public void propertyChange(java
+//                .beans.PropertyChangeEvent e){if("\u0062order".equals(e.getPropertyName()))throw new RuntimeException
+//                ();}});
                 panel2.setLayout(new MigLayout(
-                        "hidemode 3",
-                        // columns
-                        "[fill]" +
-                                "[fill]" +
-                                "[fill]",
-                        // rows
-                        "[]" +
-                                "[]" +
-                                "[]" +
-                                "[]" +
-                                "[]"));
+                    "hidemode 3",
+                    // columns
+                    "[fill]" +
+                    "[fill]" +
+                    "[fill]",
+                    // rows
+                    "[]" +
+                    "[]" +
+                    "[]" +
+                    "[]" +
+                    "[]"));
 
                 //======== tabbedPane1 ========
                 {
@@ -288,26 +284,26 @@ public class Uber {
                     //======== panel7 ========
                     {
                         panel7.setLayout(new MigLayout(
-                                "hidemode 3",
-                                // columns
-                                "[fill]" +
-                                        "[fill]" +
-                                        "[fill]",
-                                // rows
-                                "[]" +
-                                        "[]" +
-                                        "[]" +
-                                        "[]" +
-                                        "[]" +
-                                        "[]" +
-                                        "[]" +
-                                        "[]" +
-                                        "[]" +
-                                        "[]" +
-                                        "[]" +
-                                        "[]" +
-                                        "[]" +
-                                        "[]"));
+                            "hidemode 3",
+                            // columns
+                            "[fill]" +
+                            "[fill]" +
+                            "[fill]",
+                            // rows
+                            "[]" +
+                            "[]" +
+                            "[]" +
+                            "[]" +
+                            "[]" +
+                            "[]" +
+                            "[]" +
+                            "[]" +
+                            "[]" +
+                            "[]" +
+                            "[]" +
+                            "[]" +
+                            "[]" +
+                            "[]"));
 
                         //---- label5 ----
                         label5.setText("First Name");
@@ -359,16 +355,16 @@ public class Uber {
                     //======== panel8 ========
                     {
                         panel8.setLayout(new MigLayout(
-                                "hidemode 3",
-                                // columns
-                                "[fill]" +
-                                        "[fill]",
-                                // rows
-                                "[]" +
-                                        "[]" +
-                                        "[]" +
-                                        "[]" +
-                                        "[]"));
+                            "hidemode 3",
+                            // columns
+                            "[fill]" +
+                            "[fill]",
+                            // rows
+                            "[]" +
+                            "[]" +
+                            "[]" +
+                            "[]" +
+                            "[]"));
 
                         //---- label1 ----
                         label1.setText("First Name");
@@ -415,12 +411,12 @@ public class Uber {
             //======== panel3 ========
             {
                 panel3.setLayout(new MigLayout(
-                        "hidemode 3",
-                        // columns
-                        "[fill]",
-                        // rows
-                        "[]" +
-                                "[]"));
+                    "hidemode 3",
+                    // columns
+                    "[fill]",
+                    // rows
+                    "[]" +
+                    "[]"));
 
                 //======== scrollPane4 ========
                 {

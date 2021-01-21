@@ -78,6 +78,7 @@ public class sscClient {
             public void onNext(ride value) {
                 Ride received_ride = new Ride(value);
                 if (received_ride.isNull()) { // end of rides.
+                    logger.log(Level.FINER, "Got null ride from server");
                     countDownLatch.countDown();
                     return;
                 }

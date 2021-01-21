@@ -24,8 +24,12 @@ public class Ride {
     double pd;
     Set<String> reservations;
 
-    private static Ride null_ride;
+    private static final Ride null_ride;
     private static final int NULL_ID = Integer.MIN_VALUE;
+
+    static {
+        null_ride = new Ride(ride.newBuilder().setId(NULL_ID).build());
+    }
 
     public Ride(String first_name, String last_name, String phone, String start_position,
                 String end_position, String departure_time, int vacancies, double pd, int id) {
@@ -293,9 +297,6 @@ public class Ride {
     }
 
     public static Ride nullRide() {
-        if (null_ride == null) {
-            null_ride = new Ride(ride.newBuilder().setId(NULL_ID).build());
-        }
         return null_ride;
     }
 }

@@ -41,7 +41,7 @@ public class RestManager {
         return result;
     }
 
-    public static String reserveRide(Reservation reservation) {
+    public static String reserveRide(Reservation reservation) throws InterruptedException {
         final List<String> path = reservation.getPath();
         assert path.size() >= 2;
         String result = "";
@@ -104,7 +104,7 @@ public class RestManager {
     }
 
 
-    private static String reserveOneRide(Reservation reservation) {
+    private static String reserveOneRide(Reservation reservation) throws InterruptedException {
         synchronized (ServerManager.getInstance()) {
             ServerManager serverManager = ServerManager.getInstance();
             City start_city = serverManager.getCity(reservation.getPath().get(0));
@@ -116,8 +116,10 @@ public class RestManager {
             for (Server leader : leaders) {
                 logger.log(Level.FINE, "Asking leader: [" + leader.getName() + "] for rides...");
                 if (leader.getName().equals(serverManager.getServer().getName())) {
+                    ReserveRequestHandler.acquire();
                     logger.log(Level.FINE, "Trying to reserve on local rides");
                     reserved_ride = serverManager.reserveOneRideIfAvailableAndBroadCast(reservation);
+                    ReserveRequestHandler.release();
                 } else {
                     sscClient grpc_client = leader.getGrpcClient();
                     logger.log(Level.FINE, "Initializing GRPC request to reserve one ride...");
@@ -133,14 +135,15 @@ public class RestManager {
                 return "No available ride found!\n";
             }
             return reserved_ride.toString();
+
         }
     }
 
-    private static String reservePath(Reservation reservation) {
+    private static String reservePath(Reservation reservation) throws InterruptedException {
         synchronized (ServerManager.getInstance()) {
             // global lock
             String g_lock = ServerManager.getInstance().gLock();
-
+            boolean im_relevant = false;
             ServerManager serverManager = ServerManager.getInstance();
             City start_city = serverManager.getCity(reservation.getPath().get(0));
             Set<Server> leaders = new HashSet<>(serverManager.getSystemShards().values());
@@ -153,7 +156,15 @@ public class RestManager {
             for (Server leader : leaders) {
                 if (leader.getName().equals(serverManager.getServer().getName())) {
                     synchronized (all_relevant_rides) {
-                        all_relevant_rides.addAll(serverManager.getRidesForPath(path));
+//                        im_leader = true;
+                        ReserveRequestHandler.acquire();
+                        List<Ride> my_rides = serverManager.getRidesForPath(path);
+                        if (my_rides.size() != 0) {
+                            im_relevant = true;
+                        } else {
+                            ReserveRequestHandler.release();
+                        }
+                        all_relevant_rides.addAll(my_rides);
                         countDownLatch.countDown();
                         //TODO: he should also use a semaphore to lock himself, he is only locking everyone and then using his rides without locking himself, someone else can come and lock him
                     }
@@ -162,21 +173,19 @@ public class RestManager {
                     server_observer.put(leader, grpc_client.nonBlockingReserveRide(reservation.getReservationForGRPC(), all_relevant_rides, countDownLatch));
                 }
             }
-            logger.log(Level.FINER, "Got all the rides from leaders");
+            logger.log(Level.FINER, "Sent all the request for leaders");
             //wait for everyone
             try {
                 logger.log(Level.FINER, "Waiting for servers to respond");
                 if (!countDownLatch.await(10, TimeUnit.SECONDS)) {
                     logger.log(Level.FINER, "Time is up, releasing everyone"); //TODO: remove
                     server_observer.values().forEach(StreamObserver::onCompleted);
+                    if (im_relevant) ReserveRequestHandler.release();
                     serverManager.releaseGLock(g_lock);
                     logger.log(Level.WARNING, "Timeout while waiting for servers response");
                     return "Server connection error\n";
                 }
 
-
-                //release glock
-                serverManager.releaseGLock(g_lock);
 
                 //release irrelevant servers (that we contacted using grpc
                 List<Server> relevant_servers = all_relevant_rides.stream()
@@ -197,6 +206,9 @@ public class RestManager {
 
                 if (rides_to_reserve == null) {
                     relevant_servers.forEach(relevant -> server_observer.get(relevant).onCompleted()); //TODO: should we catch exception?
+                    if (im_relevant) ReserveRequestHandler.release();
+                    //release glock
+                    serverManager.releaseGLock(g_lock);
                     return "No available ride found!\n";
                 }
 
@@ -216,11 +228,17 @@ public class RestManager {
 
                 //release everyone
                 relevant_servers.forEach(relevant -> server_observer.get(relevant).onCompleted()); //TODO: should we catch exception?
+                if (im_relevant) ReserveRequestHandler.release();
+                //release glock
+                serverManager.releaseGLock(g_lock);
 
                 return rides_to_reserve.stream().map(Ride::toString).collect(Collectors.joining("----\n")); //TODO: think about it
             } catch (InterruptedException e) {
                 serverManager.releaseGLock(g_lock);
                 server_observer.values().forEach(StreamObserver::onCompleted);
+                if (im_relevant) ReserveRequestHandler.release();
+                //release glock
+                serverManager.releaseGLock(g_lock);
                 e.printStackTrace();
             }
             return "Error reserving path\n";

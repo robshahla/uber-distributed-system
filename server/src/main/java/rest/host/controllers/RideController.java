@@ -16,25 +16,31 @@ public class RideController {
 
     @PostMapping("/publishRide")
     String publishRide(@RequestBody Ride ride) {
-        System.out.println("\n\n" + DASH + " RESET REQUEST START (PUBLISH RIDE)" + DASH);
+        System.out.println("\n\n" + DASH + " REST REQUEST START (PUBLISH RIDE)" + DASH);
         String result = RestManager.publishRide(ride);
-        System.out.println(DASH + " RESET REQUEST END (PUBLISH RIDE)" + DASH);
+        System.out.println(DASH + " REST REQUEST END (PUBLISH RIDE)" + DASH);
         return result;
     }
 
     @PostMapping("/reserveRide")
     String reserveRide(@RequestBody Reservation reservation) {
-        System.out.println("\n\n" + DASH + " RESET REQUEST START (RESERVE RIDE)" + DASH);
-        String result = RestManager.reserveRide(reservation);
-        System.out.println(DASH + " RESET REQUEST END (RESERVE RIDE)" + DASH);
+        System.out.println("\n\n" + DASH + " REST REQUEST START (RESERVE RIDE)" + DASH);
+        String result = null;
+        try {
+            result = RestManager.reserveRide(reservation);
+        } catch (InterruptedException e) {
+            result = "Error while handling your request";
+            e.printStackTrace();
+        }
+        System.out.println(DASH + " REST REQUEST END (RESERVE RIDE)" + DASH);
         return result;
     }
 
     @GetMapping("/snapshot")
     String getSnapshot() {
-        System.out.println("\n\n" + DASH + " RESET REQUEST START (GET SNAPSHOT)" + DASH);
+        System.out.println("\n\n" + DASH + " REST REQUEST START (GET SNAPSHOT)" + DASH);
         String result = RestManager.getSnapshot();
-        System.out.println(DASH + " RESET REQUEST END (GET SNAPSHOT)" + DASH);
+        System.out.println(DASH + " REST REQUEST END (GET SNAPSHOT)" + DASH);
         return result;
     }
 }

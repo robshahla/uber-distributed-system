@@ -15,31 +15,30 @@ public class ReserveRequestHandler implements StreamObserver<reservation> {
     private static UberLogger logger = UberLogger.getLogger(ReserveRequestHandler.class.getName());
 
 
-    private final Semaphore internal_lock;
+    private static final Semaphore internal_lock;
     private static ReserveRequestHandler instance = null;
     private StreamObserver<ride> responseObserver;
 
     static {
         instance = new ReserveRequestHandler();
-    }
-
-    private ReserveRequestHandler() {
         internal_lock = new Semaphore(1);
     }
 
+    private ReserveRequestHandler() {}
+
     public static ReserveRequestHandler getNewHandler(StreamObserver<ride> responseObserver) throws InterruptedException {
-        instance.acquire();
+        acquire();
         instance.responseObserver = responseObserver;
         return instance;
     }
 
-    private void acquire() throws InterruptedException {
+    public static void acquire() throws InterruptedException {
         logger.log(Level.FINE, "Acquiring semaphore lock...");
         internal_lock.acquire();
         logger.log(Level.FINE, "Semaphore lock acquired");
     }
 
-    public void release() {
+    public static void release() {
         logger.log(Level.FINE, "Releasing semaphore lock");
         internal_lock.release();
     }
@@ -54,9 +53,12 @@ public class ReserveRequestHandler implements StreamObserver<reservation> {
         } else if (path_size == 2) {
             Ride reserved_ride = ServerManager.getInstance()
                     .reserveOneRideIfAvailableAndBroadCast(new Reservation(value));
+            logger.log(Level.FINE, "Finished searching for suitable rides");
             if (!reserved_ride.isNull()) {
+                logger.log(Level.FINE, "Found ride");
                 responseObserver.onNext(reserved_ride.getRideRequestForGRPC());
             }
+            logger.log(Level.FINE, "Sending end of stream to client");
             responseObserver.onNext(Ride.nullRide().getRideRequestForGRPC());
             //responseObserver.onCompleted();// TODO this should be sent as message (another onNext)
         } else {

@@ -190,7 +190,9 @@ public class ServerManager {
     }
 
     public Ride reserveOneRideIfAvailableAndBroadCast(Reservation reservation) {
+        logger.log(Level.FINE, "Before synchronized section");
         synchronized (this.rides) {
+            logger.log(Level.FINE, "In synchronized section");
             assert reservation.getPath().size() == 2;
 
             final City start_city = getCity(reservation.getPath().get(0));
@@ -199,7 +201,7 @@ public class ServerManager {
             // Filter rides before reserving,
             // Get rides that 1) This leader is responsible for their shard
             //                2) The ride can take the person from/to request path
-
+            logger.log(Level.FINE, "Searching for the relevant ride");
             Ride ride_to_reserve = rides.stream().filter(ride -> isLeaderForRide(ride) &&
                     ride.canServe(start_city, end_city) && //TODO: here add an `OR` statement between ride.canServe, and another method called ride.containsReserver(reservation)
                     ride.getDepartureTime().equals(reservation.getDepartureTime())
@@ -210,22 +212,24 @@ public class ServerManager {
                 else return d1 - d2 < 0 ? -1 : 1;
             }).orElse(Ride.nullRide());
 
-
+            logger.log(Level.FINE, "Done Searching for a relevant ride");
             if (ride_to_reserve.isNull()) {
                 logger.log(Level.FINE, "Could not find valid ride for the requested reservation!");
                 return Ride.nullRide();
             }
-
+            logger.log(Level.FINE, "Found a Relevant ride, reserving it");
             boolean reserve_result = ride_to_reserve.reserve(reservation); //TODO: add a flag that we get from this function to tell us if the ride was reserved with a new reservation or if the reservation was there, in order to avoid the atomic broadcast if we don't need it.
-            assert reserve_result;
 
             //getting the followers
+            logger.log(Level.FINE, "Getting Followers to Broadcast to");
             Set<Server> followers = getCityFollowers(ride_to_reserve.getStartPosition());
             // Build message to broadcast & broadcast
             Map<Server, List<String>> message_map = new HashMap<>();
             String message = MessagesManager.MessageFactory.updateRideBroadCastMessage(ride_to_reserve);
             MessagesManager.MessageFactory.appendMessageToServers(followers, message, message_map);
+            logger.log(Level.FINE, "Before atomic Broadcast");
             atomicBroadcast(message_map);
+            logger.log(Level.FINE, "After synchronized section and Atomic Broadcast");
             return ride_to_reserve;
         }
     }
@@ -307,7 +311,7 @@ public class ServerManager {
 
 //------------------------------------ ZooKeeper  -------------------------------------------------
 
-    public synchronized void atomicBroadcast(Map<Server, List<String>> message_map) {
+    public void atomicBroadcast(Map<Server, List<String>> message_map) {
         zk.atomicBroadCastMessage(message_map);
     }
 

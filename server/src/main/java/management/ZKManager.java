@@ -100,7 +100,7 @@ public class ZKManager {
                     return id1 - id2;
                 });
                 if (max.isEmpty()) {
-                    logger.log(Level.FINER, "Lock acquired!");
+                    logger.log(Level.FINER, "Global Lock acquired!");
                     return created_lock_name;
                 }
                 CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -137,12 +137,9 @@ public class ZKManager {
         return generated_id;
     }
 
-
     /**
-     * Atomically broadcast message to all recipes (servers) or none.
      *
-     * @param to_servers servers name to send the message to.
-     * @param message    the message to sent
+     * @param message_map
      */
     public void atomicBroadCastMessage(Map<Server, List<String>> message_map) {
         List<Op> create_node_ops = new ArrayList<>();

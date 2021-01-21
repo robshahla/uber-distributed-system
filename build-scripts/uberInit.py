@@ -213,7 +213,7 @@ def main():
     # running zookeeper container
     zookeeper_container_name = 'some-zookeeper'
     zookeeper_address = next(generator)
-    # runZookeeper(zookeeper_container_name, zookeeper_address)
+    runZookeeper(zookeeper_container_name, zookeeper_address)
 
     # building the shards and allocating each city in a shard
     cities_info, shards = insertShardForCity(cities, servers_number)

@@ -155,6 +155,7 @@ public class RestManager {
                     synchronized (all_relevant_rides) {
                         all_relevant_rides.addAll(serverManager.getRidesForPath(path));
                         countDownLatch.countDown();
+                        //TODO: he should also use a semaphore to lock himself, he is only locking everyone and then using his rides without locking himself, someone else can come and lock him
                     }
                 } else {
                     sscClient grpc_client = leader.getGrpcClient();

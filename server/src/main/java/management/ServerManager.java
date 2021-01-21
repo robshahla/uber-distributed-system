@@ -216,7 +216,7 @@ public class ServerManager {
                 return Ride.nullRide();
             }
 
-            boolean reserve_result = ride_to_reserve.reserve(reservation);
+            boolean reserve_result = ride_to_reserve.reserve(reservation); //TODO: add a flag that we get from this function to tell us if the ride was reserved with a new reservation or if the reservation was there, in order to avoid the atomic broadcast if we don't need it.
             assert reserve_result;
 
             //getting the followers

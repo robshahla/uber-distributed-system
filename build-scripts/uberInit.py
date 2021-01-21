@@ -1,9 +1,7 @@
 import os
-import subprocess
 import sys
 import time
 import json
-import cleaner.ZKInit as zkInit
 
 
 # TODO: make this configurable from ENV VAR, using kofiko
@@ -148,7 +146,7 @@ def runServers(servers_config: list, zookeeper_container_name: str, servers_numb
         os.system(" ".join(command))
 
 
-# return a list that contains all of the cities with their shars assigned, and a list of all the shards
+# return a list that contains all of the cities with their shards assigned, and a list of all the shards
 # in our system
 def insertShardForCity(cities, servers_number):
     assert servers_number > 0
@@ -195,11 +193,17 @@ def copyNeededFiles():
     os.system('cp ../client/build/libs/client-1.0.jar .')
 
 
+def buildProject():
+    os.system('gradle build -p ../server')
+    os.system('gradle build -p ../client')
+
+
 def runGUI():
     os.system('java -jar client-1.0.jar ./servers-addresses.txt')
 
 
 def main():
+    buildProject()
     copyNeededFiles()
 
     servers_number, cities = getConfigs()

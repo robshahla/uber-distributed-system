@@ -202,9 +202,9 @@ def runGUI():
 
 
 def main():
-    copyNeededFiles()
     servers_number, cities = getConfigs()
     buildProject()
+    copyNeededFiles()
     network_config = NetworkConfig()
 
     # building network bridge for all the containers
@@ -240,6 +240,7 @@ def main():
     runServers(servers_config, zookeeper_container_name, servers_number)
 
     # running GUI
+    time.sleep(2)
     runGUI()
 
 

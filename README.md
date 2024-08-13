@@ -2,7 +2,7 @@
 This repository contains the code for the Uber Distributed System. The system offers is a distributed ride sharing service that allows users to either offer rides or request rides between a group of cities. The system is scalable and fault tolerant.
 
 The servers are implemented in Java and the communication between them is done using the gRPC framework.
-Each server runs in a Docker container. Few of the algorithms used between the servers are leader elections, failure detection and atomic broadcast. The cities are represented as points in a 2D plane.
+Each server runs in a Docker container. Among the algorithms used between the servers are leader elections, failure detection and atomic broadcast. The cities are represented as points in a 2D plane.
 
 ## Run
 To run the system, you need to have Docker installed. You can run the system by following these steps:
